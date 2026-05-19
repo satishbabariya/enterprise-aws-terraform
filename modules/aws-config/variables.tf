@@ -44,6 +44,34 @@ variable "conformance_pack_delivery_bucket" {
   default     = ""
 }
 
+variable "managed_rules" {
+  description = <<-EOT
+    AWS-managed Config rules to enable individually (in addition to conformance packs).
+    Use this when a specific rule isn't bundled in a conformance pack you've enabled
+    or when you want to enforce a stricter parameter than the pack default.
+    Example:
+      {
+        ROOT_ACCOUNT_MFA_ENABLED = { source_identifier = "ROOT_ACCOUNT_MFA_ENABLED" }
+        IAM_PASSWORD_POLICY      = {
+          source_identifier = "IAM_PASSWORD_POLICY"
+          input_parameters  = { RequireSymbols = "true", MinimumPasswordLength = "14" }
+        }
+      }
+  EOT
+  type = map(object({
+    source_identifier = string
+    input_parameters  = optional(map(string), {})
+    description       = optional(string, "")
+  }))
+  default = {}
+}
+
+variable "create_sns_topic" {
+  description = "Create an SNS topic that AWS Config publishes change notifications to (for SIEM/Lambda subscribers)."
+  type        = bool
+  default     = false
+}
+
 variable "tags" {
   description = "Tags."
   type        = map(string)

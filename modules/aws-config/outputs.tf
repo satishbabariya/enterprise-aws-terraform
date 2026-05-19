@@ -17,3 +17,13 @@ output "conformance_pack_arns" {
   description = "Map of conformance pack key to ARN"
   value       = { for k, v in aws_config_conformance_pack.this : k => v.arn }
 }
+
+output "sns_topic_arn" {
+  description = "Config SNS notification topic ARN (empty if not created)"
+  value       = try(aws_sns_topic.config[0].arn, "")
+}
+
+output "managed_rule_arns" {
+  description = "Map of managed Config rule name to ARN"
+  value       = { for k, v in aws_config_config_rule.managed : k => v.arn }
+}
