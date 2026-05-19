@@ -41,7 +41,7 @@ variable "weekly_backup_retention_days" {
 variable "monthly_backup_retention_days" {
   description = "How long to retain monthly backups (regulatory archive)."
   type        = number
-  default     = 2555  # 7 years
+  default     = 2555 # 7 years
 }
 
 variable "cross_region_copy_destination" {

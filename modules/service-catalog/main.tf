@@ -16,13 +16,13 @@ resource "aws_servicecatalog_principal_portfolio_association" "this" {
 resource "aws_servicecatalog_product" "this" {
   for_each = var.products
 
-  name        = each.key
-  owner       = each.value.owner
-  description = each.value.description
-  distributor = each.value.distributor
+  name          = each.key
+  owner         = each.value.owner
+  description   = each.value.description
+  distributor   = each.value.distributor
   support_email = each.value.support_email
   support_url   = each.value.support_url
-  type        = "CLOUD_FORMATION_TEMPLATE"
+  type          = "CLOUD_FORMATION_TEMPLATE"
 
   provisioning_artifact_parameters {
     name         = "v1"

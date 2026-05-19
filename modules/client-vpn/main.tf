@@ -80,9 +80,9 @@ resource "aws_ec2_client_vpn_route" "routes" {
     for combo in flatten([
       for subnet in var.subnet_ids : [
         for route in var.allowed_routes : {
-          key             = "${subnet}-${route}"
-          subnet          = subnet
-          destination     = route
+          key         = "${subnet}-${route}"
+          subnet      = subnet
+          destination = route
         }
       ]
     ]) : combo.key => combo

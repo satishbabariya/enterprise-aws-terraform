@@ -94,10 +94,10 @@ resource "aws_rds_cluster" "this" {
   backup_retention_period = var.backup_retention_days
   preferred_backup_window = "03:00-05:00"
 
-  deletion_protection      = var.deletion_protection
-  skip_final_snapshot      = false
+  deletion_protection       = var.deletion_protection
+  skip_final_snapshot       = false
   final_snapshot_identifier = "${var.name}-final-${formatdate("YYYYMMDDhhmmss", timestamp())}"
-  copy_tags_to_snapshot    = true
+  copy_tags_to_snapshot     = true
 
   iam_database_authentication_enabled = true
 
@@ -121,8 +121,8 @@ resource "aws_rds_cluster_instance" "this" {
 
   db_subnet_group_name = aws_db_subnet_group.this.name
 
-  performance_insights_enabled    = true
-  performance_insights_kms_key_id = var.kms_key_arn
+  performance_insights_enabled          = true
+  performance_insights_kms_key_id       = var.kms_key_arn
   performance_insights_retention_period = 7
 
   monitoring_interval = 60

@@ -4,8 +4,8 @@ resource "aws_cloudwatch_event_rule" "high_severity" {
   description = "Route GuardDuty high-severity findings (7.0-10.0) to SNS"
 
   event_pattern = jsonencode({
-    source        = ["aws.guardduty"]
-    detail-type   = ["GuardDuty Finding"]
+    source      = ["aws.guardduty"]
+    detail-type = ["GuardDuty Finding"]
     detail = {
       severity = [
         { numeric = [">=", 7.0, "<", 9.0] }
@@ -23,13 +23,13 @@ resource "aws_cloudwatch_event_target" "high_severity_sns" {
 
   input_transformer {
     input_paths = {
-      type       = "$.detail.type"
-      severity   = "$.detail.severity"
-      account    = "$.detail.accountId"
-      region     = "$.detail.region"
-      resource   = "$.detail.resource.resourceType"
-      title      = "$.detail.title"
-      desc       = "$.detail.description"
+      type     = "$.detail.type"
+      severity = "$.detail.severity"
+      account  = "$.detail.accountId"
+      region   = "$.detail.region"
+      resource = "$.detail.resource.resourceType"
+      title    = "$.detail.title"
+      desc     = "$.detail.description"
     }
     input_template = "\"[GuardDuty HIGH] Account <account> Region <region>: <title>\\n\\nType: <type>\\nSeverity: <severity>\\nResource: <resource>\\n\\n<desc>\""
   }
@@ -41,8 +41,8 @@ resource "aws_cloudwatch_event_rule" "critical_severity" {
   description = "Route GuardDuty critical findings (9.0-10.0) to critical SNS for paging"
 
   event_pattern = jsonencode({
-    source        = ["aws.guardduty"]
-    detail-type   = ["GuardDuty Finding"]
+    source      = ["aws.guardduty"]
+    detail-type = ["GuardDuty Finding"]
     detail = {
       severity = [
         { numeric = [">=", 9.0] }
@@ -178,8 +178,8 @@ resource "aws_cloudwatch_event_rule" "auto_quarantine" {
   description = "GuardDuty findings that auto-quarantine the affected EC2 instance"
 
   event_pattern = jsonencode({
-    source        = ["aws.guardduty"]
-    detail-type   = ["GuardDuty Finding"]
+    source      = ["aws.guardduty"]
+    detail-type = ["GuardDuty Finding"]
     detail = {
       type = var.auto_quarantine_findings
     }

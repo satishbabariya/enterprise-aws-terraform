@@ -22,13 +22,13 @@ variable "products" {
     etc. that developers can self-service through the AWS console.
   EOT
   type = map(object({
-    description           = string
-    owner                 = string
-    template_url          = string
-    version_description   = optional(string, "Initial version")
-    distributor           = optional(string, "")
-    support_email         = optional(string, "")
-    support_url           = optional(string, "")
+    description         = string
+    owner               = string
+    template_url        = string
+    version_description = optional(string, "Initial version")
+    distributor         = optional(string, "")
+    support_email       = optional(string, "")
+    support_url         = optional(string, "")
   }))
   default = {}
 }

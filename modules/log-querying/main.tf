@@ -74,20 +74,20 @@ resource "aws_glue_catalog_table" "cloudtrail" {
   table_type    = "EXTERNAL_TABLE"
 
   parameters = {
-    "EXTERNAL"           = "TRUE"
-    "classification"     = "cloudtrail"
-    "compressionType"    = "gzip"
-    "projection.enabled" = "true"
-    "projection.region.type" = "enum"
-    "projection.region.values" = "us-east-1,us-east-2,us-west-1,us-west-2,eu-west-1,eu-west-2,eu-central-1"
-    "projection.year.type"   = "integer"
-    "projection.year.range"  = "2024,2030"
-    "projection.month.type"  = "integer"
-    "projection.month.range" = "1,12"
-    "projection.month.digits" = "2"
-    "projection.day.type"    = "integer"
-    "projection.day.range"   = "1,31"
-    "projection.day.digits"  = "2"
+    "EXTERNAL"                  = "TRUE"
+    "classification"            = "cloudtrail"
+    "compressionType"           = "gzip"
+    "projection.enabled"        = "true"
+    "projection.region.type"    = "enum"
+    "projection.region.values"  = "us-east-1,us-east-2,us-west-1,us-west-2,eu-west-1,eu-west-2,eu-central-1"
+    "projection.year.type"      = "integer"
+    "projection.year.range"     = "2024,2030"
+    "projection.month.type"     = "integer"
+    "projection.month.range"    = "1,12"
+    "projection.month.digits"   = "2"
+    "projection.day.type"       = "integer"
+    "projection.day.range"      = "1,31"
+    "projection.day.digits"     = "2"
     "storage.location.template" = "s3://${var.log_archive_bucket_name}/cloudtrail/AWSLogs/$${region}/CloudTrail/$${region}/$${year}/$${month}/$${day}/"
   }
 
@@ -179,11 +179,11 @@ resource "aws_glue_catalog_table" "vpc_flow_logs" {
   table_type    = "EXTERNAL_TABLE"
 
   parameters = {
-    "EXTERNAL"        = "TRUE"
-    "classification"  = "parquet"
-    "projection.enabled" = "true"
+    "EXTERNAL"                     = "TRUE"
+    "classification"               = "parquet"
+    "projection.enabled"           = "true"
     "projection.account_name.type" = "injected"
-    "storage.location.template" = "s3://${var.log_archive_bucket_name}/vpc-flow-logs/$${account_name}/"
+    "storage.location.template"    = "s3://${var.log_archive_bucket_name}/vpc-flow-logs/$${account_name}/"
   }
 
   partition_keys {

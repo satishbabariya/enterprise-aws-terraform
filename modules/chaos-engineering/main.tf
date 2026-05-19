@@ -43,8 +43,8 @@ resource "aws_fis_experiment_template" "ec2_stop" {
   role_arn    = aws_iam_role.fis.arn
 
   action {
-    name        = "stopInstance"
-    action_id   = "aws:ec2:stop-instances"
+    name      = "stopInstance"
+    action_id = "aws:ec2:stop-instances"
 
     parameter {
       key   = "startInstancesAfterDuration"

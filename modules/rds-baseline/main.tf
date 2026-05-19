@@ -93,7 +93,7 @@ resource "aws_db_instance" "this" {
   db_name  = var.db_name
   username = var.master_username
   # Password is managed by Secrets Manager rotation
-  manage_master_user_password = true
+  manage_master_user_password   = true
   master_user_secret_kms_key_id = var.kms_key_arn
 
   port                   = local.port
@@ -102,18 +102,18 @@ resource "aws_db_instance" "this" {
   parameter_group_name   = aws_db_parameter_group.this.name
   publicly_accessible    = false
 
-  multi_az                     = var.multi_az
-  backup_retention_period      = var.backup_retention_days
-  backup_window                = var.backup_window
-  maintenance_window           = var.maintenance_window
-  copy_tags_to_snapshot        = true
-  deletion_protection          = var.deletion_protection
-  delete_automated_backups     = false
-  skip_final_snapshot          = false
-  final_snapshot_identifier    = "${var.name}-final-${formatdate("YYYYMMDDhhmmss", timestamp())}"
+  multi_az                  = var.multi_az
+  backup_retention_period   = var.backup_retention_days
+  backup_window             = var.backup_window
+  maintenance_window        = var.maintenance_window
+  copy_tags_to_snapshot     = true
+  deletion_protection       = var.deletion_protection
+  delete_automated_backups  = false
+  skip_final_snapshot       = false
+  final_snapshot_identifier = "${var.name}-final-${formatdate("YYYYMMDDhhmmss", timestamp())}"
 
-  performance_insights_enabled    = true
-  performance_insights_kms_key_id = var.kms_key_arn
+  performance_insights_enabled          = true
+  performance_insights_kms_key_id       = var.kms_key_arn
   performance_insights_retention_period = 7
 
   monitoring_interval = 60

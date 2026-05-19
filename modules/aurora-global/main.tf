@@ -18,8 +18,8 @@ resource "aws_rds_cluster" "primary" {
   engine                    = aws_rds_global_cluster.this.engine
   engine_version            = aws_rds_global_cluster.this.engine_version
 
-  database_name = var.database_name
-  master_username = var.master_username
+  database_name                 = var.database_name
+  master_username               = var.master_username
   manage_master_user_password   = true
   master_user_secret_kms_key_id = var.primary_kms_key_arn
 

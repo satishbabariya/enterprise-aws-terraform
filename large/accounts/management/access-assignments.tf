@@ -11,14 +11,14 @@
 locals {
   # ----- SSO groups (personas) -----
   sso_groups = {
-    PlatformAdmins      = "Platform/SRE team - manages org-wide infrastructure"
-    AppDevelopersProd   = "Application developers - read-only on prod"
+    PlatformAdmins       = "Platform/SRE team - manages org-wide infrastructure"
+    AppDevelopersProd    = "Application developers - read-only on prod"
     AppDevelopersNonProd = "Application developers - power user on dev/staging/sandbox"
-    SecurityEngineers   = "Security team - full access in security accounts, audit elsewhere"
-    Auditors            = "Internal/external auditors - read-only across all accounts"
-    FinanceTeam         = "Finance team - billing and cost data only"
-    ExternalContractors = "External contractors - limited write on dev/sandbox only, IP-restricted"
-    BreakGlass          = "Emergency admin access - use triggers CloudTrail alert"
+    SecurityEngineers    = "Security team - full access in security accounts, audit elsewhere"
+    Auditors             = "Internal/external auditors - read-only across all accounts"
+    FinanceTeam          = "Finance team - billing and cost data only"
+    ExternalContractors  = "External contractors - limited write on dev/sandbox only, IP-restricted"
+    BreakGlass           = "Emergency admin access - use triggers CloudTrail alert"
   }
 
   # ----- Custom permission sets (least-privilege personas) -----
@@ -28,7 +28,7 @@ locals {
       description         = "Read-only app developer access in prod"
       session_duration    = "PT4H"
       managed_policy_arns = ["arn:aws:iam::aws:policy/ReadOnlyAccess"]
-      inline_policy_json  = jsonencode({
+      inline_policy_json = jsonencode({
         Version = "2012-10-17"
         Statement = [{
           Sid    = "DenyMutations"
@@ -53,12 +53,12 @@ locals {
       description         = "Power user for dev/staging/sandbox - no IAM or Org"
       session_duration    = "PT8H"
       managed_policy_arns = ["arn:aws:iam::aws:policy/PowerUserAccess"]
-      inline_policy_json  = jsonencode({
+      inline_policy_json = jsonencode({
         Version = "2012-10-17"
         Statement = [{
-          Sid      = "DenyPrivilegedMutations"
-          Effect   = "Deny"
-          Action   = [
+          Sid    = "DenyPrivilegedMutations"
+          Effect = "Deny"
+          Action = [
             "iam:CreateUser", "iam:CreateAccessKey", "iam:CreatePolicy",
             "organizations:*", "sso:*", "sso-directory:*",
             "cloudtrail:Delete*", "cloudtrail:Stop*",
@@ -71,8 +71,8 @@ locals {
 
     # Security incident responder - admin in security accounts, audit elsewhere
     SecurityResponder = {
-      description         = "Incident response - full access in security/log accounts, read elsewhere"
-      session_duration    = "PT4H"
+      description      = "Incident response - full access in security/log accounts, read elsewhere"
+      session_duration = "PT4H"
       managed_policy_arns = [
         "arn:aws:iam::aws:policy/AdministratorAccess",
       ]
@@ -90,23 +90,23 @@ locals {
       description         = "External contractor - dev/sandbox only, MFA + IP restricted"
       session_duration    = "PT2H"
       managed_policy_arns = ["arn:aws:iam::aws:policy/PowerUserAccess"]
-      inline_policy_json  = jsonencode({
+      inline_policy_json = jsonencode({
         Version = "2012-10-17"
         Statement = concat(
           [
             {
-              Sid      = "RequireMFA"
-              Effect   = "Deny"
+              Sid       = "RequireMFA"
+              Effect    = "Deny"
               NotAction = ["iam:ChangePassword", "iam:GetUser", "sts:GetSessionToken"]
-              Resource = "*"
+              Resource  = "*"
               Condition = {
                 BoolIfExists = { "aws:MultiFactorAuthPresent" = "false" }
               }
             },
             {
-              Sid      = "DenyPrivilegedMutations"
-              Effect   = "Deny"
-              Action   = [
+              Sid    = "DenyPrivilegedMutations"
+              Effect = "Deny"
+              Action = [
                 "iam:*", "organizations:*", "sso:*",
                 "cloudtrail:*", "guardduty:*", "config:*",
                 "securityhub:*", "macie2:*", "kms:ScheduleKeyDeletion"
