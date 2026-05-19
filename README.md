@@ -69,7 +69,7 @@ flowchart TB
     SECURITY -->|alerts| MGMT
     SECURITY -->|sts:AssumeRole AuditReader| LOG
 
-    GH -->|Conftest policy-check<br/>(Rego over plan.json)| MGMT
+    GH -->|Conftest policy-check on plan.json| MGMT
 ```
 
 **Legend** — yellow: management trust root · red: security/audit accounts · blue: shared infrastructure · green: workloads · solid arrows: IAM trust · dotted: telemetry/logging · double lines: network connectivity
