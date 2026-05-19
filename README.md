@@ -73,7 +73,7 @@ flowchart TB
 
 ## What's included
 
-- **`modules/`** — 45 reusable Terraform modules (no state) — see catalog below
+- **`modules/`** — 47 reusable Terraform modules (no state) — see catalog below
 - **`medium/`** — 10-account reference deployment
 - **`large/`** — 30+ account reference deployment (with BU structure, account-vending, multi-region modules)
 - **`bootstrap/`** — One-time state infrastructure setup
@@ -93,7 +93,8 @@ flowchart TB
 | [`account-vending`](modules/account-vending) | Map-driven account creation via Organizations API with OU placement |
 | [`workload-baseline`](modules/workload-baseline) | Composite for workload accounts: KMS + account-baseline + state-backend + secrets-baseline + GitHub OIDC CI role |
 | [`state-backend`](modules/state-backend) | Per-account S3 + DynamoDB for Terraform state |
-| [`kms`](modules/kms) | KMS key with rotation, configurable admins/users, alias |
+| [`kms`](modules/kms) | KMS key with rotation, configurable admins/users, alias, key_usage + customer_master_key_spec for asymmetric keys |
+| [`kms-multi-region`](modules/kms-multi-region) | Multi-region KMS: primary + replica with matching alias in both regions (enables seamless cross-region S3 replication) |
 
 ### Identity & access
 
@@ -105,7 +106,8 @@ flowchart TB
 
 | Module | Purpose |
 |---|---|
-| [`cloudtrail`](modules/cloudtrail) | Org-wide multi-region trail with log file validation, S3+Lambda data events, ApiCallRateInsights |
+| [`cloudtrail`](modules/cloudtrail) | Org-wide multi-region trail with log file validation, S3+Lambda data events, ApiCall+ApiError Insights, CW Logs delivery, 15 CIS metric filters + alarms, EventBridge auto-remediation rules |
+| [`cloudtrail-lake`](modules/cloudtrail-lake) | CloudTrail Lake Event Data Store with 7-year retention, SQL-queryable, optional S3/Lambda data event capture |
 | [`aws-config`](modules/aws-config) | Config recorder + org aggregator + CIS / PCI-DSS / HIPAA / NIST conformance packs |
 | [`security-hub`](modules/security-hub) | Security Hub with CIS v3, PCI-DSS, NIST 800-53 standards |
 | [`guardduty`](modules/guardduty) | Org-wide GuardDuty with all detection features (S3, EKS, EBS malware, RDS, Lambda) |
