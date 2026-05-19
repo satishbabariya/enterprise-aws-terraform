@@ -68,6 +68,34 @@ variable "flow_log_kms_key_arn" {
   type        = string
 }
 
+variable "enable_gateway_endpoints" {
+  description = "Create Gateway endpoints (S3, DynamoDB). Free; no NAT bypass cost."
+  type        = bool
+  default     = true
+}
+
+variable "interface_endpoint_services" {
+  description = <<-EOT
+    Interface endpoint service short names to create (without 'com.amazonaws.<region>.' prefix).
+    Each interface endpoint costs ~$7.20/month/AZ plus data charges, but avoids NAT bandwidth.
+    Common picks: ssm, ssmmessages, ec2messages, ec2, kms, logs, secretsmanager,
+    monitoring, sts, ecr.api, ecr.dkr.
+  EOT
+  type        = list(string)
+  default = [
+    "ssm",
+    "ssmmessages",
+    "ec2messages",
+    "kms",
+    "logs",
+    "secretsmanager",
+    "monitoring",
+    "sts",
+    "ecr.api",
+    "ecr.dkr",
+  ]
+}
+
 variable "tags" {
   description = "Tags."
   type        = map(string)

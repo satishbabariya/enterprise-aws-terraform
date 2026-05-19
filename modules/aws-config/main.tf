@@ -57,3 +57,22 @@ resource "aws_config_configuration_aggregator" "org" {
   }
   tags = var.tags
 }
+
+# Conformance packs: deploy AWS-managed compliance frameworks.
+# template_s3_uri pulls the YAML from AWS's reference architecture bucket.
+resource "aws_config_conformance_pack" "this" {
+  for_each = var.conformance_packs
+
+  name            = "${var.org_name}-${each.key}"
+  template_s3_uri = each.value
+
+  dynamic "input_parameter" {
+    for_each = var.conformance_pack_delivery_bucket != "" ? [1] : []
+    content {
+      parameter_name  = "DeliveryS3Bucket"
+      parameter_value = var.conformance_pack_delivery_bucket
+    }
+  }
+
+  depends_on = [aws_config_configuration_recorder_status.this]
+}

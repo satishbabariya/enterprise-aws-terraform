@@ -22,6 +22,14 @@ module "state_backend" {
   tags                   = var.tags
 }
 
+module "secrets" {
+  source       = "../secrets-baseline"
+  org_name     = var.org_name
+  account_name = var.account_name
+  account_id   = var.account_id
+  tags         = var.tags
+}
+
 resource "aws_iam_openid_connect_provider" "github" {
   url             = "https://token.actions.githubusercontent.com"
   client_id_list  = ["sts.amazonaws.com"]

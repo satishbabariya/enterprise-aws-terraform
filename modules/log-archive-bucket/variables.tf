@@ -33,6 +33,22 @@ variable "object_lock_retention_days" {
   }
 }
 
+variable "replica_bucket_arn" {
+  description = <<-EOT
+    ARN of a destination bucket in a secondary region for cross-region replication.
+    Must exist (create with a second copy of this module in the secondary region first,
+    or pass a pre-existing replica bucket). Empty disables replication.
+  EOT
+  type        = string
+  default     = ""
+}
+
+variable "replica_kms_key_arn" {
+  description = "KMS key ARN in the destination region for encrypting replicated objects. Required if replica_bucket_arn is set."
+  type        = string
+  default     = ""
+}
+
 variable "tags" {
   description = "Tags."
   type        = map(string)

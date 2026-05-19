@@ -64,3 +64,15 @@ variable "external_contractor_allowed_ips" {
   type        = list(string)
   default     = []
 }
+
+variable "monthly_org_budget_usd" {
+  description = "Org-wide monthly budget alert threshold in USD."
+  type        = number
+  default     = 50000
+}
+
+variable "budget_notification_emails" {
+  description = "Emails to notify on budget thresholds."
+  type        = list(string)
+  default     = []
+}

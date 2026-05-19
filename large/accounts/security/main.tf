@@ -50,10 +50,19 @@ module "inspector" {
 }
 
 module "aws_config" {
-  source                    = "../../../modules/aws-config"
-  org_name                  = var.org_name
-  account_id                = var.security_account_id
-  log_archive_bucket_name   = data.terraform_remote_state.log_archive.outputs.log_archive_bucket_name
-  kms_key_arn               = module.kms.key_arn
-  org_aggregator_account_id = var.security_account_id
+  source                           = "../../../modules/aws-config"
+  org_name                         = var.org_name
+  account_id                       = var.security_account_id
+  log_archive_bucket_name          = data.terraform_remote_state.log_archive.outputs.log_archive_bucket_name
+  kms_key_arn                      = module.kms.key_arn
+  org_aggregator_account_id        = var.security_account_id
+  conformance_pack_delivery_bucket = data.terraform_remote_state.log_archive.outputs.log_archive_bucket_name
+}
+
+# Central AWS Backup vault. Workload accounts tag resources with Backup=true
+# to be included in the backup selection.
+module "central_backup" {
+  source      = "../../../modules/aws-backup"
+  org_name    = var.org_name
+  kms_key_arn = module.kms.key_arn
 }

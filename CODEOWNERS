@@ -1,0 +1,30 @@
+# Code ownership for review enforcement.
+# Lines later in the file override earlier lines for the same path.
+
+# Default owner for everything
+*                                       @satishbabariya
+
+# Security-sensitive: require security team review
+/modules/scp-policies/                  @satishbabariya
+/modules/aws-organization/              @satishbabariya
+/modules/security-hub/                  @satishbabariya
+/modules/guardduty/                     @satishbabariya
+/modules/aws-config/                    @satishbabariya
+/modules/cloudtrail/                    @satishbabariya
+/modules/kms/                           @satishbabariya
+/modules/identity-center/               @satishbabariya
+/modules/log-archive-bucket/            @satishbabariya
+/medium/accounts/management/            @satishbabariya
+/medium/accounts/security/              @satishbabariya
+/medium/accounts/log-archive/           @satishbabariya
+/large/accounts/management/             @satishbabariya
+/large/accounts/security/               @satishbabariya
+/large/accounts/log-archive/            @satishbabariya
+
+# CI/CD pipelines: require platform team review
+/.github/                               @satishbabariya
+/bootstrap/                             @satishbabariya
+
+# Compliance docs: require security + compliance review
+/docs/compliance-matrix.md              @satishbabariya
+/docs/access-management.md              @satishbabariya

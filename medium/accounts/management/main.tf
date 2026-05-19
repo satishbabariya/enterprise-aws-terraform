@@ -106,3 +106,37 @@ module "cloudtrail" {
   kms_key_arn             = module.kms.key_arn
   tags                    = local.common_tags
 }
+
+# ===== Tier 1 additions =====
+
+# Tag policies: enforce mandatory tagging across the org
+module "tag_policies" {
+  source = "../../../modules/tag-policies"
+  tags   = local.common_tags
+}
+
+resource "aws_organizations_policy_attachment" "tags_all_ous" {
+  policy_id = module.tag_policies.policy_id
+  target_id = module.organization.root_id
+}
+
+# Centralized notifications by severity + EventBridge bus
+module "notifications" {
+  source     = "../../../modules/notifications"
+  org_name   = var.org_name
+  kms_key_id = module.kms.key_id
+  tags       = local.common_tags
+}
+
+# Cost management: CUR + Cost Anomaly Detection + org budget
+module "cost_management" {
+  source                     = "../../../modules/cost-management"
+  providers                  = { aws.us_east_1 = aws.us_east_1 }
+  org_name                   = var.org_name
+  cur_bucket_name            = data.terraform_remote_state.log_archive.outputs.log_archive_bucket_name
+  cur_bucket_region          = var.region
+  anomaly_alert_topic_arn    = module.notifications.topic_arns["high"]
+  monthly_org_budget_usd     = var.monthly_org_budget_usd
+  budget_notification_emails = var.budget_notification_emails
+  tags                       = local.common_tags
+}

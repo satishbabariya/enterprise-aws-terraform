@@ -47,3 +47,18 @@ output "cloudtrail_trail_arn" {
   description = "Organization CloudTrail ARN"
   value       = module.cloudtrail.trail_arn
 }
+
+output "notification_topic_arns" {
+  description = "Central SNS topics by severity"
+  value       = module.notifications.topic_arns
+}
+
+output "central_event_bus_arn" {
+  description = "Central EventBridge bus ARN"
+  value       = module.notifications.event_bus_arn
+}
+
+output "tag_policy_id" {
+  description = "Org-wide tag policy ID"
+  value       = module.tag_policies.policy_id
+}

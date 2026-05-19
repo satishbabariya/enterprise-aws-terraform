@@ -129,3 +129,109 @@ resource "aws_s3_bucket_policy" "logs" {
   bucket = aws_s3_bucket.logs.id
   policy = data.aws_iam_policy_document.logs_bucket_policy.json
 }
+
+# Cross-region replication: requires a destination bucket in the secondary region.
+# Provision the replica bucket separately (a second invocation of this module aliased
+# to the secondary region with replication disabled), then pass its ARN here.
+
+resource "aws_iam_role" "replication" {
+  count = var.replica_bucket_arn != "" ? 1 : 0
+
+  name = "${var.org_name}-log-archive-replication"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "s3.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+    }]
+  })
+
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy" "replication" {
+  count = var.replica_bucket_arn != "" ? 1 : 0
+
+  name = "replication-policy"
+  role = aws_iam_role.replication[0].id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["s3:GetReplicationConfiguration", "s3:ListBucket"]
+        Resource = aws_s3_bucket.logs.arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObjectVersionForReplication",
+          "s3:GetObjectVersionAcl",
+          "s3:GetObjectVersionTagging"
+        ]
+        Resource = "${aws_s3_bucket.logs.arn}/*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:ReplicateObject",
+          "s3:ReplicateDelete",
+          "s3:ReplicateTags"
+        ]
+        Resource = "${var.replica_bucket_arn}/*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "kms:Decrypt"
+        ]
+        Resource = var.kms_key_arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "kms:Encrypt"
+        ]
+        Resource = var.replica_kms_key_arn
+      }
+    ]
+  })
+}
+
+resource "aws_s3_bucket_replication_configuration" "logs" {
+  count = var.replica_bucket_arn != "" ? 1 : 0
+
+  role   = aws_iam_role.replication[0].arn
+  bucket = aws_s3_bucket.logs.id
+
+  rule {
+    id     = "replicate-all"
+    status = "Enabled"
+
+    filter {}
+
+    delete_marker_replication {
+      status = "Enabled"
+    }
+
+    destination {
+      bucket        = var.replica_bucket_arn
+      storage_class = "STANDARD_IA"
+
+      encryption_configuration {
+        replica_kms_key_id = var.replica_kms_key_arn
+      }
+    }
+
+    source_selection_criteria {
+      sse_kms_encrypted_objects {
+        status = "Enabled"
+      }
+    }
+  }
+
+  depends_on = [aws_s3_bucket_versioning.logs]
+}
