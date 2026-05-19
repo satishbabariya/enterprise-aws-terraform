@@ -129,3 +129,17 @@ skip-check:
   # Logging destination must be supplied by caller (Kinesis Firehose, CW Logs).
   # Exposed via var.log_destination_arn.
   - CKV2_AWS_69
+
+  # CKV_AWS_18: Ensure the S3 bucket has access logging enabled
+  # log-archive-bucket IS the logging sink for every other bucket; self-logging
+  # creates an infinite loop. Trail integrity protected by Object Lock + KMS +
+  # bucket policy (DenyExternalPrincipals + DenyNonSecureTransport).
+  - CKV_AWS_18
+
+  # CKV_AWS_144: Ensure that S3 bucket has cross-region replication enabled
+  # CRR is appropriate for log archives and other long-lived audit data, but NOT
+  # for operational state buckets (Terraform state, Athena query results).
+  # - log-archive-bucket DOES support CRR via var.replica_bucket_arn (opt-in)
+  # - state-backend buckets are regional by design; CRR breaks state locking
+  # - Athena results expire after 30 days; CRR adds cost without value
+  - CKV_AWS_144
