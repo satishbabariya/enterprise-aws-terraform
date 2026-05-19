@@ -88,6 +88,8 @@ resource "aws_db_instance" "this" {
   max_allocated_storage = var.max_allocated_storage_gb
   storage_type          = "gp3"
   storage_encrypted     = true
+  iops                  = var.iops
+  storage_throughput    = var.storage_throughput
   kms_key_id            = var.kms_key_arn
 
   db_name  = var.db_name
@@ -102,15 +104,21 @@ resource "aws_db_instance" "this" {
   parameter_group_name   = aws_db_parameter_group.this.name
   publicly_accessible    = false
 
-  multi_az                  = var.multi_az
-  backup_retention_period   = var.backup_retention_days
-  backup_window             = var.backup_window
-  maintenance_window        = var.maintenance_window
-  copy_tags_to_snapshot     = true
-  deletion_protection       = var.deletion_protection
-  delete_automated_backups  = false
-  skip_final_snapshot       = false
-  final_snapshot_identifier = "${var.name}-final-${formatdate("YYYYMMDDhhmmss", timestamp())}"
+  multi_az                    = var.multi_az
+  backup_retention_period     = var.backup_retention_days
+  backup_window               = var.backup_window
+  maintenance_window          = var.maintenance_window
+  copy_tags_to_snapshot       = true
+  deletion_protection         = var.deletion_protection
+  delete_automated_backups    = false
+  skip_final_snapshot         = false
+  final_snapshot_identifier   = "${var.name}-final-${formatdate("YYYYMMDDhhmmss", timestamp())}"
+  apply_immediately           = var.apply_immediately
+  allow_major_version_upgrade = var.allow_major_version_upgrade
+
+  blue_green_update {
+    enabled = var.blue_green_update_enabled
+  }
 
   performance_insights_enabled          = true
   performance_insights_kms_key_id       = var.kms_key_arn

@@ -67,6 +67,34 @@ variable "node_group_desired_size" {
   default     = 3
 }
 
+variable "managed_addons" {
+  description = <<-EOT
+    AWS-managed EKS addons. Each entry can override version, configuration JSON,
+    and an explicit IRSA role ARN. Default includes the 4 core addons every cluster needs.
+    Set enabled=false on any entry to skip that addon.
+  EOT
+  type = map(object({
+    enabled                     = optional(bool, true)
+    addon_version               = optional(string, null)
+    configuration_values        = optional(string, null)
+    service_account_role_arn    = optional(string, null)
+    resolve_conflicts_on_create = optional(string, "OVERWRITE")
+    resolve_conflicts_on_update = optional(string, "OVERWRITE")
+  }))
+  default = {
+    "vpc-cni"            = {}
+    "coredns"            = {}
+    "kube-proxy"         = {}
+    "aws-ebs-csi-driver" = {}
+  }
+}
+
+variable "create_oidc_provider" {
+  description = "Create an IAM OIDC identity provider for the cluster. Required for IRSA (IAM Roles for Service Accounts)."
+  type        = bool
+  default     = true
+}
+
 variable "tags" {
   description = "Tags."
   type        = map(string)

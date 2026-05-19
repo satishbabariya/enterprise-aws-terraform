@@ -1,6 +1,22 @@
 locals {
   name_prefix = "${var.org_name}-${var.account_name}"
   nat_count   = var.enable_nat_gateway ? (var.single_nat_gateway ? 1 : 3) : 0
+
+  # EKS subnet tags - kubernetes.io/role/elb on public, internal-elb on private.
+  # AWS Load Balancer Controller scans these to auto-place ALBs/NLBs.
+  eks_cluster_tags = {
+    for name in var.eks_cluster_names : "kubernetes.io/cluster/${name}" => "shared"
+  }
+
+  eks_public_subnet_tags = var.eks_subnet_tags_enabled ? merge(
+    { "kubernetes.io/role/elb" = "1" },
+    local.eks_cluster_tags,
+  ) : {}
+
+  eks_private_subnet_tags = var.eks_subnet_tags_enabled ? merge(
+    { "kubernetes.io/role/internal-elb" = "1" },
+    local.eks_cluster_tags,
+  ) : {}
 }
 
 resource "aws_vpc" "this" {
@@ -18,7 +34,7 @@ resource "aws_subnet" "public" {
   availability_zone       = var.availability_zones[count.index]
   map_public_ip_on_launch = false
 
-  tags = merge(var.tags, {
+  tags = merge(var.tags, local.eks_public_subnet_tags, {
     Name = "${local.name_prefix}-public-${count.index + 1}"
     Tier = "public"
   })
@@ -30,7 +46,7 @@ resource "aws_subnet" "private" {
   cidr_block        = var.private_subnet_cidrs[count.index]
   availability_zone = var.availability_zones[count.index]
 
-  tags = merge(var.tags, {
+  tags = merge(var.tags, local.eks_private_subnet_tags, {
     Name = "${local.name_prefix}-private-${count.index + 1}"
     Tier = "private"
   })

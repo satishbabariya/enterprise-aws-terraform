@@ -27,3 +27,13 @@ output "cluster_arn" {
   description = "Cluster ARN"
   value       = aws_rds_cluster.this.arn
 }
+
+output "proxy_endpoint" {
+  description = "RDS Proxy endpoint (empty if proxy not enabled). Connect via this in apps instead of the cluster endpoint."
+  value       = try(aws_db_proxy.this[0].endpoint, "")
+}
+
+output "proxy_arn" {
+  description = "RDS Proxy ARN"
+  value       = try(aws_db_proxy.this[0].arn, "")
+}

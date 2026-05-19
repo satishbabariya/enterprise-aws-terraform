@@ -96,6 +96,36 @@ variable "deletion_protection" {
   default     = true
 }
 
+variable "iops" {
+  description = "Provisioned IOPS for gp3/io1/io2. Null uses AWS default. For gp3, only set if > 3000 baseline IOPS needed."
+  type        = number
+  default     = null
+}
+
+variable "storage_throughput" {
+  description = "Provisioned throughput in MB/s for gp3 storage. Null uses default (125 MB/s). Max 1000 MB/s."
+  type        = number
+  default     = null
+}
+
+variable "blue_green_update_enabled" {
+  description = "Enable blue/green deployments for engine version upgrades - seconds of downtime instead of minutes."
+  type        = bool
+  default     = false
+}
+
+variable "allow_major_version_upgrade" {
+  description = "Allow Terraform to perform major version upgrades. Disabled by default to prevent accidental cross-version migration."
+  type        = bool
+  default     = false
+}
+
+variable "apply_immediately" {
+  description = "Apply modifications immediately instead of next maintenance window. Some changes still cause downtime."
+  type        = bool
+  default     = false
+}
+
 variable "tags" {
   description = "Tags."
   type        = map(string)

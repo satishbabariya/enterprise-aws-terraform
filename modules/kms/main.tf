@@ -48,10 +48,12 @@ data "aws_iam_policy_document" "key_policy" {
 }
 
 resource "aws_kms_key" "this" {
-  description             = var.description
-  deletion_window_in_days = var.deletion_window_in_days
-  enable_key_rotation     = true
-  policy                  = data.aws_iam_policy_document.key_policy.json
+  description              = var.description
+  deletion_window_in_days  = var.deletion_window_in_days
+  enable_key_rotation      = var.customer_master_key_spec == "SYMMETRIC_DEFAULT"
+  key_usage                = var.key_usage
+  customer_master_key_spec = var.customer_master_key_spec
+  policy                   = data.aws_iam_policy_document.key_policy.json
 
   tags = var.tags
 }

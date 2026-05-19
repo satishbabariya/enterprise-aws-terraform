@@ -96,6 +96,22 @@ variable "interface_endpoint_services" {
   ]
 }
 
+variable "eks_subnet_tags_enabled" {
+  description = <<-EOT
+    Add kubernetes.io/role/elb (public) and kubernetes.io/role/internal-elb (private)
+    tags so the AWS Load Balancer Controller can auto-discover subnets. Required
+    if this VPC hosts EKS workloads. Safe to leave on - costs nothing if no EKS.
+  EOT
+  type        = bool
+  default     = true
+}
+
+variable "eks_cluster_names" {
+  description = "EKS cluster names that should additionally tag subnets with kubernetes.io/cluster/<name> = shared. Required when sharing a VPC across multiple clusters."
+  type        = list(string)
+  default     = []
+}
+
 variable "tags" {
   description = "Tags."
   type        = map(string)

@@ -152,3 +152,95 @@ resource "aws_iam_role_policy_attachment" "monitoring" {
   role       = aws_iam_role.monitoring.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
 }
+
+# ============================================================
+# RDS Proxy (optional)
+# Sits between clients and the cluster. Pools connections,
+# supports IAM auth, and shortens failover RTO.
+# ============================================================
+resource "aws_iam_role" "proxy" {
+  count = var.enable_rds_proxy ? 1 : 0
+
+  name = "${var.name}-rds-proxy"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "rds.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+    }]
+  })
+
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy" "proxy" {
+  count = var.enable_rds_proxy ? 1 : 0
+
+  name = "secrets-and-kms"
+  role = aws_iam_role.proxy[0].id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["secretsmanager:GetSecretValue"]
+        Resource = aws_rds_cluster.this.master_user_secret[0].secret_arn
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["kms:Decrypt"]
+        Resource = var.kms_key_arn
+        Condition = {
+          StringEquals = {
+            "kms:ViaService" = "secretsmanager.${data.aws_region.current.region}.amazonaws.com"
+          }
+        }
+      }
+    ]
+  })
+}
+
+data "aws_region" "current" {}
+
+resource "aws_db_proxy" "this" {
+  count = var.enable_rds_proxy ? 1 : 0
+
+  name                   = "${var.name}-proxy"
+  engine_family          = var.engine == "aurora-postgresql" ? "POSTGRESQL" : "MYSQL"
+  role_arn               = aws_iam_role.proxy[0].arn
+  vpc_subnet_ids         = var.isolated_subnet_ids
+  vpc_security_group_ids = [aws_security_group.this.id]
+  require_tls            = var.rds_proxy_require_tls
+  idle_client_timeout    = var.rds_proxy_idle_client_timeout_seconds
+
+  auth {
+    auth_scheme = "SECRETS"
+    iam_auth    = "REQUIRED"
+    secret_arn  = aws_rds_cluster.this.master_user_secret[0].secret_arn
+  }
+
+  tags = var.tags
+}
+
+resource "aws_db_proxy_default_target_group" "this" {
+  count = var.enable_rds_proxy ? 1 : 0
+
+  db_proxy_name = aws_db_proxy.this[0].name
+
+  connection_pool_config {
+    connection_borrow_timeout    = 120
+    max_connections_percent      = 100
+    max_idle_connections_percent = 50
+    session_pinning_filters      = []
+  }
+}
+
+resource "aws_db_proxy_target" "this" {
+  count = var.enable_rds_proxy ? 1 : 0
+
+  db_cluster_identifier = aws_rds_cluster.this.id
+  db_proxy_name         = aws_db_proxy.this[0].name
+  target_group_name     = aws_db_proxy_default_target_group.this[0].name
+}

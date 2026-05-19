@@ -39,6 +39,22 @@ variable "additional_key_users" {
   default     = []
 }
 
+variable "key_usage" {
+  description = "Intended use: ENCRYPT_DECRYPT (symmetric data keys, the default), SIGN_VERIFY (asymmetric signing), KEY_AGREEMENT (ECDH), or GENERATE_VERIFY_MAC (HMAC)."
+  type        = string
+  default     = "ENCRYPT_DECRYPT"
+  validation {
+    condition     = contains(["ENCRYPT_DECRYPT", "SIGN_VERIFY", "KEY_AGREEMENT", "GENERATE_VERIFY_MAC"], var.key_usage)
+    error_message = "key_usage must be ENCRYPT_DECRYPT, SIGN_VERIFY, KEY_AGREEMENT, or GENERATE_VERIFY_MAC."
+  }
+}
+
+variable "customer_master_key_spec" {
+  description = "Key spec: SYMMETRIC_DEFAULT (256-bit AES, the default), or asymmetric: RSA_2048/3072/4096, ECC_NIST_P256/384/521, ECC_SECG_P256K1, HMAC_224/256/384/512, SM2."
+  type        = string
+  default     = "SYMMETRIC_DEFAULT"
+}
+
 variable "tags" {
   description = "Tags to apply to the KMS key."
   type        = map(string)

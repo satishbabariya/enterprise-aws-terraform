@@ -73,6 +73,28 @@ variable "deletion_protection" {
   default     = true
 }
 
+variable "enable_rds_proxy" {
+  description = <<-EOT
+    Provision RDS Proxy in front of the cluster. Connection pooling + IAM auth +
+    faster failover (seconds vs tens of seconds). Critical for Lambda/serverless.
+    Costs ~$0.015/vCPU-hour per node behind the proxy.
+  EOT
+  type        = bool
+  default     = false
+}
+
+variable "rds_proxy_idle_client_timeout_seconds" {
+  description = "Seconds an idle proxy client can hold a connection before recycling."
+  type        = number
+  default     = 1800
+}
+
+variable "rds_proxy_require_tls" {
+  description = "Require TLS between clients and proxy."
+  type        = bool
+  default     = true
+}
+
 variable "tags" {
   description = "Tags."
   type        = map(string)
