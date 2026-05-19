@@ -34,3 +34,14 @@ variable "object_lock_retention_days" {
   type        = number
   default     = 365
 }
+
+variable "security_account_id" {
+  description = "Security account ID - granted assume permission on the AuditReader role."
+  type        = string
+}
+
+variable "audit_reader_external_id" {
+  description = "Optional external ID required when assuming the AuditReader role (defense in depth)."
+  type        = string
+  default     = ""
+}

@@ -18,4 +18,11 @@ module "log_archive_bucket" {
   management_account_id      = var.management_account_id
   kms_key_arn                = module.kms.key_arn
   object_lock_retention_days = var.object_lock_retention_days
+
+  # Cross-account AuditReader role - assumable by anyone in the security account.
+  # SecurityEngineers and Auditors SSO groups (in management) get permission to
+  # assume this role via their permission sets to query the centralized logs
+  # without needing a per-prefix S3 IAM grant in their own session.
+  audit_reader_principal_arns = ["arn:aws:iam::${var.security_account_id}:root"]
+  audit_reader_external_id    = var.audit_reader_external_id
 }

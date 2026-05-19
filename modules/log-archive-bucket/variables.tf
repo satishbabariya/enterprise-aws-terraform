@@ -49,6 +49,23 @@ variable "replica_kms_key_arn" {
   default     = ""
 }
 
+variable "audit_reader_principal_arns" {
+  description = <<-EOT
+    IAM principals (typically the security account's audit role ARN, or an SSO
+    permission set role pattern) that can assume the AuditReader role to query
+    archived logs read-only. Empty list disables the role creation.
+    Example: ["arn:aws:iam::222222222222:root"]
+  EOT
+  type        = list(string)
+  default     = []
+}
+
+variable "audit_reader_external_id" {
+  description = "Optional external ID required by the AuditReader trust policy (defense in depth for cross-account trust). Empty disables."
+  type        = string
+  default     = ""
+}
+
 variable "tags" {
   description = "Tags."
   type        = map(string)

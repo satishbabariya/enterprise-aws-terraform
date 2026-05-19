@@ -235,3 +235,112 @@ resource "aws_s3_bucket_replication_configuration" "logs" {
 
   depends_on = [aws_s3_bucket_versioning.logs]
 }
+
+# ============================================================
+# Cross-account AuditReader role
+# Lives in this (log-archive) account; trusted by the security account
+# so auditors / IR analysts can list + read logs without granting
+# them broad bucket access via S3 IAM in their own account.
+# ============================================================
+locals {
+  create_audit_role = length(var.audit_reader_principal_arns) > 0
+}
+
+data "aws_iam_policy_document" "audit_reader_trust" {
+  count = local.create_audit_role ? 1 : 0
+
+  statement {
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = var.audit_reader_principal_arns
+    }
+    actions = ["sts:AssumeRole"]
+
+    dynamic "condition" {
+      for_each = var.audit_reader_external_id != "" ? [1] : []
+      content {
+        test     = "StringEquals"
+        variable = "sts:ExternalId"
+        values   = [var.audit_reader_external_id]
+      }
+    }
+  }
+}
+
+data "aws_iam_policy_document" "audit_reader_permissions" {
+  count = local.create_audit_role ? 1 : 0
+
+  statement {
+    sid    = "ListBucket"
+    effect = "Allow"
+    actions = [
+      "s3:GetBucketLocation",
+      "s3:ListBucket",
+      "s3:GetBucketVersioning",
+    ]
+    resources = [aws_s3_bucket.logs.arn]
+  }
+
+  statement {
+    sid    = "ReadObjects"
+    effect = "Allow"
+    actions = [
+      "s3:GetObject",
+      "s3:GetObjectVersion",
+      "s3:GetObjectTagging",
+    ]
+    resources = ["${aws_s3_bucket.logs.arn}/*"]
+  }
+
+  statement {
+    sid    = "DecryptLogs"
+    effect = "Allow"
+    actions = [
+      "kms:Decrypt",
+      "kms:DescribeKey",
+      "kms:GenerateDataKey",
+    ]
+    resources = [var.kms_key_arn]
+  }
+
+  # Explicit deny on all mutating operations
+  statement {
+    sid    = "DenyMutations"
+    effect = "Deny"
+    actions = [
+      "s3:PutObject*",
+      "s3:DeleteObject*",
+      "s3:DeleteBucket*",
+      "s3:PutBucket*",
+      "s3:PutBucketPolicy",
+      "s3:PutBucketAcl",
+      "s3:PutObjectLegalHold",
+      "s3:PutObjectRetention",
+      "s3:BypassGovernanceRetention",
+    ]
+    resources = [
+      aws_s3_bucket.logs.arn,
+      "${aws_s3_bucket.logs.arn}/*",
+    ]
+  }
+}
+
+resource "aws_iam_role" "audit_reader" {
+  count = local.create_audit_role ? 1 : 0
+
+  name                 = "${var.org_name}-log-archive-audit-reader"
+  description          = "Cross-account read-only role over the centralized log archive bucket"
+  assume_role_policy   = data.aws_iam_policy_document.audit_reader_trust[0].json
+  max_session_duration = 3600 # 1 hour - force re-assumption for long investigations
+
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy" "audit_reader" {
+  count = local.create_audit_role ? 1 : 0
+
+  name   = "log-archive-read-and-decrypt"
+  role   = aws_iam_role.audit_reader[0].id
+  policy = data.aws_iam_policy_document.audit_reader_permissions[0].json
+}
