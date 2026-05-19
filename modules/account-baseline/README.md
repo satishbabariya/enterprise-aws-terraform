@@ -36,5 +36,6 @@
 
 | Name | Description |
 |------|-------------|
+| <a name="output_baselined_account_id"></a> [baselined\_account\_id](#output\_baselined\_account\_id) | Echoes back the account\_id input. Use to assert that callers ran this module against the account they expected (catches misconfigured assume\_role). |
 | <a name="output_s3_public_access_block_id"></a> [s3\_public\_access\_block\_id](#output\_s3\_public\_access\_block\_id) | ID of the S3 account public access block |
 <!-- END_TF_DOCS -->

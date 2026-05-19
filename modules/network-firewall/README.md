@@ -27,6 +27,7 @@
 | <a name="input_domain_allowlist"></a> [domain\_allowlist](#input\_domain\_allowlist) | Domains that egress is permitted to. Wildcard subdomains via .example.com syntax. Empty list means no allowlist enforcement. | `list(string)` | `[]` | no |
 | <a name="input_enable_managed_rule_groups"></a> [enable\_managed\_rule\_groups](#input\_enable\_managed\_rule\_groups) | Attach AWS-managed threat-intel rule groups. | `bool` | `true` | no |
 | <a name="input_firewall_subnet_ids"></a> [firewall\_subnet\_ids](#input\_firewall\_subnet\_ids) | Subnet IDs (one per AZ) where firewall endpoints will be placed. | `list(string)` | n/a | yes |
+| <a name="input_kms_key_arn"></a> [kms\_key\_arn](#input\_kms\_key\_arn) | Customer-managed KMS key ARN for encrypting Network Firewall configuration (firewall + policy). Empty uses AWS-owned key. | `string` | `""` | no |
 | <a name="input_log_destination_arn"></a> [log\_destination\_arn](#input\_log\_destination\_arn) | Kinesis Firehose ARN or CloudWatch Logs ARN for firewall flow + alert logs. | `string` | n/a | yes |
 | <a name="input_log_destination_type"></a> [log\_destination\_type](#input\_log\_destination\_type) | S3, CloudWatchLogs, or KinesisDataFirehose | `string` | `"CloudWatchLogs"` | no |
 | <a name="input_org_name"></a> [org\_name](#input\_org\_name) | Short lowercase org name. | `string` | n/a | yes |
