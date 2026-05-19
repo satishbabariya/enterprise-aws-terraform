@@ -44,6 +44,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # Modules using `configuration_aliases` (provider aliases passed by the
+        # caller) cannot be validated standalone - they're tested through their
+        # consumers' terraform validate. Excluded here:
+        #   cost-management (aws.us_east_1)
+        #   tgw-peering, aurora-global, kms-multi-region (aws.primary + aws.secondary)
         dir:
           - modules/aws-organization
           - modules/scp-policies
@@ -86,7 +91,6 @@ jobs:
           - modules/ses-baseline
           - modules/aws-backup
           - modules/chaos-engineering
-          - modules/cost-management
           - modules/secrets-baseline
           - modules/service-catalog
     steps:
