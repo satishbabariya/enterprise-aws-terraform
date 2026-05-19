@@ -22,3 +22,18 @@ output "conformance_pack_arns" {
   description = "Conformance pack ARNs (CIS, PCI-DSS, HIPAA, NIST)"
   value       = module.aws_config.conformance_pack_arns
 }
+
+output "athena_workgroup_name" {
+  description = "Athena workgroup for querying centralized logs"
+  value       = module.log_querying.workgroup_name
+}
+
+output "glue_logs_database" {
+  description = "Glue database holding CloudTrail / VPC flow log tables"
+  value       = module.log_querying.glue_database_name
+}
+
+output "guardduty_quarantine_lambda_arn" {
+  description = "Lambda that auto-quarantines compromised EC2 instances on specific findings"
+  value       = module.guardduty_auto_remediation.quarantine_lambda_arn
+}

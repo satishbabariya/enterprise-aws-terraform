@@ -26,6 +26,19 @@ jobs:
           - medium/accounts/staging
           - medium/accounts/dev
           - medium/accounts/sandbox
+          - large/accounts/management
+          - large/accounts/log-archive
+          - large/accounts/security
+          - large/accounts/network
+          - large/accounts/shared-services
+          - large/accounts/data-platform
+          - large/accounts/security-tools
+          - large/accounts/bu-alpha/prod
+          - large/accounts/bu-alpha/staging
+          - large/accounts/bu-alpha/dev
+          - large/accounts/bu-beta/prod
+          - large/accounts/bu-beta/staging
+          - large/accounts/bu-beta/dev
 
     steps:
       - uses: actions/checkout@v4

@@ -7,6 +7,15 @@ data "terraform_remote_state" "log_archive" {
   }
 }
 
+data "terraform_remote_state" "management" {
+  backend = "s3"
+  config = {
+    bucket = "${var.org_name}-us-east-1-tfstate"
+    key    = "large/management/terraform.tfstate"
+    region = var.region
+  }
+}
+
 module "kms" {
   source      = "../../../modules/kms"
   account_id  = var.security_account_id
@@ -65,4 +74,29 @@ module "central_backup" {
   source      = "../../../modules/aws-backup"
   org_name    = var.org_name
   kms_key_arn = module.kms.key_arn
+}
+
+# Athena + Glue for querying CloudTrail / VPC flow logs in the log archive
+module "log_querying" {
+  source                  = "../../../modules/log-querying"
+  org_name                = var.org_name
+  log_archive_bucket_name = data.terraform_remote_state.log_archive.outputs.log_archive_bucket_name
+  kms_key_arn             = module.kms.key_arn
+}
+
+# Audit Manager: org-wide delegated admin registration
+module "audit_manager" {
+  source                     = "../../../modules/audit-manager"
+  org_name                   = var.org_name
+  evidence_bucket_name       = data.terraform_remote_state.log_archive.outputs.log_archive_bucket_name
+  kms_key_arn                = module.kms.key_arn
+  delegated_admin_account_id = var.security_account_id
+}
+
+# GuardDuty auto-remediation: high/critical SNS routing + auto-quarantine for known-bad findings
+module "guardduty_auto_remediation" {
+  source                   = "../../../modules/guardduty-auto-remediation"
+  org_name                 = var.org_name
+  critical_alert_topic_arn = data.terraform_remote_state.management.outputs.notification_topic_arns["critical"]
+  high_alert_topic_arn     = data.terraform_remote_state.management.outputs.notification_topic_arns["high"]
 }
