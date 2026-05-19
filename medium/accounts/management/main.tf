@@ -52,7 +52,12 @@ module "identity_center" {
   source            = "../../../modules/identity-center"
   sso_instance_arn  = var.sso_instance_arn
   identity_store_id = var.identity_store_id
-  tags              = local.common_tags
+
+  groups                 = local.sso_groups
+  custom_permission_sets = local.custom_permission_sets
+  account_assignments    = local.account_assignments
+
+  tags = local.common_tags
 }
 
 resource "aws_iam_openid_connect_provider" "github" {

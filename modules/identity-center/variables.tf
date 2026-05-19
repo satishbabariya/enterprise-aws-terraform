@@ -9,12 +9,11 @@ variable "identity_store_id" {
 }
 
 variable "permission_sets" {
-  description = "Map of permission set name to config."
+  description = "Permission sets backed by AWS-managed policies. Use custom_permission_sets for inline-policy or persona-specific sets."
   type = map(object({
     description         = string
     session_duration    = string
     managed_policy_arns = list(string)
-    inline_policy_json  = optional(string, "")
   }))
   default = {
     AdministratorAccess = {
@@ -45,8 +44,33 @@ variable "permission_sets" {
   }
 }
 
+variable "custom_permission_sets" {
+  description = <<-EOT
+    Persona-specific permission sets. Each set can combine AWS-managed policy
+    ARNs with an inline policy (JSON). Use this for tight least-privilege roles
+    like WorkloadDeveloperProd, BreakGlassAdmin, ExternalContractor, etc.
+  EOT
+  type = map(object({
+    description         = string
+    session_duration    = string
+    managed_policy_arns = optional(list(string), [])
+    inline_policy_json  = optional(string, "")
+  }))
+  default = {}
+}
+
+variable "groups" {
+  description = "SSO groups to create in the Identity Store. Map of group name to display description."
+  type        = map(string)
+  default     = {}
+}
+
 variable "account_assignments" {
-  description = "List of SSO account assignments."
+  description = <<-EOT
+    SSO account assignments. principal_type = "GROUP" (recommended) or "USER".
+    For GROUP assignments, set principal_id to a key from var.groups - the module
+    resolves it to the created group's ID. For USER, pass the identity store user ID directly.
+  EOT
   type = list(object({
     account_id          = string
     permission_set_name = string

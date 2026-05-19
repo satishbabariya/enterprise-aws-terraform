@@ -23,6 +23,21 @@ output "permission_set_arns" {
   value       = module.identity_center.permission_set_arns
 }
 
+output "custom_permission_set_arns" {
+  description = "Custom persona permission set ARNs"
+  value       = module.identity_center.custom_permission_set_arns
+}
+
+output "sso_group_ids" {
+  description = "SSO group IDs by name - add humans to these groups via your IdP"
+  value       = module.identity_center.group_ids
+}
+
+output "break_glass_alert_topic_arn" {
+  description = "SNS topic that fires when BreakGlassAdmin is assumed"
+  value       = aws_sns_topic.break_glass_alerts.arn
+}
+
 output "terraform_ci_role_arn" {
   description = "Management Terraform CI role ARN"
   value       = aws_iam_role.terraform_ci.arn

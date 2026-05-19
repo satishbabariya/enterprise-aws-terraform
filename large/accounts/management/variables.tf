@@ -44,3 +44,23 @@ variable "allowed_regions" {
   type        = list(string)
   default     = ["us-east-1", "us-west-2"]
 }
+
+variable "account_ids" {
+  description = "Map of account-name to 12-digit account ID for SSO group assignments."
+  type = object({
+    security        = string
+    log_archive     = string
+    network         = string
+    shared_services = string
+    prod            = string
+    staging         = string
+    dev             = string
+    sandbox         = string
+  })
+}
+
+variable "external_contractor_allowed_ips" {
+  description = "CIDRs from which external contractors may assume their role. Use [] to disable IP restriction."
+  type        = list(string)
+  default     = []
+}
