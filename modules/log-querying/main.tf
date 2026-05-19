@@ -258,3 +258,128 @@ resource "aws_glue_catalog_table" "vpc_flow_logs" {
     }
   }
 }
+
+# ============================================================
+# Saved Athena queries - CIS canonical investigations
+# Run via: aws athena start-query-execution --query-string ... --work-group <wg>
+# Or open the Athena console -> Saved queries -> select by name
+# ============================================================
+
+resource "aws_athena_named_query" "root_account_usage" {
+  name        = "${var.org_name}-cis-3.3-root-account-usage"
+  workgroup   = aws_athena_workgroup.logs.id
+  database    = aws_glue_catalog_database.logs.name
+  description = "CIS 3.3 - All API calls made by the root user in the last 7 days"
+  query       = <<-SQL
+    SELECT eventtime, eventname, sourceipaddress, useragent, awsregion, useridentity.accountid
+    FROM ${aws_glue_catalog_database.logs.name}.cloudtrail
+    WHERE useridentity.type = 'Root'
+      AND year = year(current_date)
+      AND month = month(current_date)
+      AND day >= day(current_date - INTERVAL '7' DAY)
+    ORDER BY eventtime DESC
+    LIMIT 100;
+  SQL
+}
+
+resource "aws_athena_named_query" "unauthorized_api_calls" {
+  name        = "${var.org_name}-cis-3.1-unauthorized-api-calls"
+  workgroup   = aws_athena_workgroup.logs.id
+  database    = aws_glue_catalog_database.logs.name
+  description = "CIS 3.1 - AccessDenied / UnauthorizedOperation in the last 24h"
+  query       = <<-SQL
+    SELECT eventtime, eventname, errorcode, errormessage, useridentity.arn, sourceipaddress
+    FROM ${aws_glue_catalog_database.logs.name}.cloudtrail
+    WHERE (errorcode LIKE '%UnauthorizedOperation' OR errorcode LIKE 'AccessDenied%')
+      AND year = year(current_date)
+      AND month = month(current_date)
+      AND day >= day(current_date - INTERVAL '1' DAY)
+    ORDER BY eventtime DESC
+    LIMIT 500;
+  SQL
+}
+
+resource "aws_athena_named_query" "console_logins_no_mfa" {
+  name        = "${var.org_name}-cis-3.2-console-logins-without-mfa"
+  workgroup   = aws_athena_workgroup.logs.id
+  database    = aws_glue_catalog_database.logs.name
+  description = "CIS 3.2 - Successful IAM-user console sign-ins without MFA"
+  query       = <<-SQL
+    SELECT eventtime, useridentity.username, sourceipaddress, useragent
+    FROM ${aws_glue_catalog_database.logs.name}.cloudtrail
+    WHERE eventname = 'ConsoleLogin'
+      AND useridentity.type = 'IAMUser'
+      AND json_extract_scalar(responseelements, '$.ConsoleLogin') = 'Success'
+      AND (json_extract_scalar(requestparameters, '$.MFAUsed') = 'No'
+           OR json_extract_scalar(requestparameters, '$.MFAUsed') IS NULL)
+      AND year = year(current_date)
+      AND month = month(current_date)
+    ORDER BY eventtime DESC
+    LIMIT 200;
+  SQL
+}
+
+resource "aws_athena_named_query" "iam_user_creation" {
+  name        = "${var.org_name}-iam-user-creation"
+  workgroup   = aws_athena_workgroup.logs.id
+  database    = aws_glue_catalog_database.logs.name
+  description = "All IAM users created across the org (workloads should never create these)"
+  query       = <<-SQL
+    SELECT eventtime, awsregion, useridentity.arn AS created_by,
+           json_extract_scalar(requestparameters, '$.userName') AS new_user
+    FROM ${aws_glue_catalog_database.logs.name}.cloudtrail
+    WHERE eventname = 'CreateUser'
+      AND errorcode IS NULL
+    ORDER BY eventtime DESC
+    LIMIT 200;
+  SQL
+}
+
+resource "aws_athena_named_query" "vpc_flow_top_talkers" {
+  name        = "${var.org_name}-vpc-flow-top-talkers"
+  workgroup   = aws_athena_workgroup.logs.id
+  database    = aws_glue_catalog_database.logs.name
+  description = "Top egress destinations by byte volume in the last hour - useful for anomaly hunting"
+  query       = <<-SQL
+    SELECT dstaddr, sum(bytes) AS total_bytes, sum(packets) AS total_packets, count(*) AS flows
+    FROM ${aws_glue_catalog_database.logs.name}.vpc_flow_logs
+    WHERE "start" > to_unixtime(current_timestamp - INTERVAL '1' HOUR)
+      AND action = 'ACCEPT'
+    GROUP BY dstaddr
+    ORDER BY total_bytes DESC
+    LIMIT 50;
+  SQL
+}
+
+resource "aws_athena_named_query" "vpc_flow_rejected" {
+  name        = "${var.org_name}-vpc-flow-rejected"
+  workgroup   = aws_athena_workgroup.logs.id
+  database    = aws_glue_catalog_database.logs.name
+  description = "Top REJECT sources in the last hour - port-scan / firewall probe detection"
+  query       = <<-SQL
+    SELECT srcaddr, dstport, count(*) AS reject_count
+    FROM ${aws_glue_catalog_database.logs.name}.vpc_flow_logs
+    WHERE "start" > to_unixtime(current_timestamp - INTERVAL '1' HOUR)
+      AND action = 'REJECT'
+    GROUP BY srcaddr, dstport
+    ORDER BY reject_count DESC
+    LIMIT 50;
+  SQL
+}
+
+resource "aws_athena_named_query" "kms_key_disable_or_delete" {
+  name        = "${var.org_name}-cis-3.7-kms-disable-or-delete"
+  workgroup   = aws_athena_workgroup.logs.id
+  database    = aws_glue_catalog_database.logs.name
+  description = "CIS 3.7 - Customer-managed KMS keys disabled or scheduled for deletion"
+  query       = <<-SQL
+    SELECT eventtime, eventname, useridentity.arn,
+           json_extract_scalar(requestparameters, '$.keyId') AS key_id,
+           json_extract_scalar(requestparameters, '$.pendingWindowInDays') AS pending_days
+    FROM ${aws_glue_catalog_database.logs.name}.cloudtrail
+    WHERE eventsource = 'kms.amazonaws.com'
+      AND eventname IN ('DisableKey', 'ScheduleKeyDeletion')
+    ORDER BY eventtime DESC
+    LIMIT 100;
+  SQL
+}

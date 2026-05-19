@@ -104,7 +104,24 @@ module "cloudtrail" {
   org_name                = var.org_name
   log_archive_bucket_name = data.terraform_remote_state.log_archive.outputs.log_archive_bucket_name
   kms_key_arn             = module.kms.key_arn
-  tags                    = local.common_tags
+
+  enable_cloudwatch_logs         = true
+  cloudwatch_log_retention_days  = 365
+  alarms_sns_topic_arn           = module.notifications.topic_arns["high"]
+  enable_delivery_notification   = false
+  enable_eventbridge_remediation = true
+
+  tags = local.common_tags
+}
+
+# CloudTrail Lake: SQL-queryable event data store with up to 7-year retention.
+# Complements the S3 trail + Athena setup. Useful for long-horizon investigations
+# without paying for S3 + Athena scan costs per query.
+module "cloudtrail_lake" {
+  source         = "../../../modules/cloudtrail-lake"
+  org_name       = var.org_name
+  kms_key_arn    = module.kms.key_arn
+  retention_days = 2555 # 7 years
 }
 
 # ===== Tier 1 additions =====

@@ -62,3 +62,23 @@ output "tag_policy_id" {
   description = "Org-wide tag policy ID"
   value       = module.tag_policies.policy_id
 }
+
+output "cloudtrail_log_group_name" {
+  description = "CloudWatch log group receiving the org trail"
+  value       = module.cloudtrail.cloudwatch_log_group_name
+}
+
+output "cloudtrail_cis_alarm_arns" {
+  description = "Map of CIS rule key to CloudWatch alarm ARN"
+  value       = module.cloudtrail.cis_alarm_arns
+}
+
+output "cloudtrail_eventbridge_rule_arns" {
+  description = "EventBridge rule ARNs for CloudTrail auto-remediation"
+  value       = module.cloudtrail.eventbridge_rule_arns
+}
+
+output "cloudtrail_lake_arn" {
+  description = "CloudTrail Lake Event Data Store ARN (7-year retention)"
+  value       = module.cloudtrail_lake.event_data_store_arn
+}
