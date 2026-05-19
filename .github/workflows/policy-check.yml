@@ -1,0 +1,89 @@
+name: Policy Check (Conftest)
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'medium/accounts/**'
+      - 'large/accounts/**'
+      - 'modules/**'
+      - 'policies/**'
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      accounts: ${{ steps.filter.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect changed account roots
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            medium-management:
+              - 'medium/accounts/management/**'
+              - 'modules/**'
+              - 'policies/**'
+            medium-security:
+              - 'medium/accounts/security/**'
+              - 'modules/**'
+              - 'policies/**'
+            medium-network:
+              - 'medium/accounts/network/**'
+              - 'modules/**'
+              - 'policies/**'
+
+  conftest:
+    needs: detect-changes
+    runs-on: ubuntu-latest
+    if: ${{ needs.detect-changes.outputs.accounts != '[]' && needs.detect-changes.outputs.accounts != '' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        account: ${{ fromJSON(needs.detect-changes.outputs.accounts) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.x"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.MANAGEMENT_ACCOUNT_ID }}:role/acme-management-terraform-ci
+          aws-region: us-east-1
+
+      - name: Install Conftest
+        run: |
+          wget -q https://github.com/open-policy-agent/conftest/releases/download/v0.55.0/conftest_0.55.0_Linux_x86_64.tar.gz
+          tar xzf conftest_0.55.0_Linux_x86_64.tar.gz
+          sudo mv conftest /usr/local/bin/
+
+      - name: Resolve account path
+        id: path
+        run: |
+          ACCOUNT="${{ matrix.account }}"
+          PREFIX=$(echo $ACCOUNT | cut -d- -f1)
+          NAME=$(echo $ACCOUNT | cut -d- -f2-)
+          echo "dir=${PREFIX}/accounts/${NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Terraform Plan -> JSON
+        working-directory: ${{ steps.path.outputs.dir }}
+        run: |
+          terraform init -input=false
+          terraform plan -out=tfplan.binary -input=false
+          terraform show -json tfplan.binary > plan.json
+
+      - name: Run Conftest against plan
+        working-directory: ${{ steps.path.outputs.dir }}
+        run: conftest test plan.json --policy $GITHUB_WORKSPACE/policies/ --all-namespaces
