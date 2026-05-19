@@ -43,6 +43,16 @@ resource "aws_s3_bucket_public_access_block" "logs" {
   restrict_public_buckets = true
 }
 
+# Disable ACLs entirely - all access controlled via bucket policy + IAM.
+# This is the AWS recommendation as of 2023 (was BucketOwnerPreferred before).
+resource "aws_s3_bucket_ownership_controls" "logs" {
+  bucket = aws_s3_bucket.logs.id
+
+  rule {
+    object_ownership = "BucketOwnerEnforced"
+  }
+}
+
 resource "aws_s3_bucket_lifecycle_configuration" "logs" {
   bucket = aws_s3_bucket.logs.id
 
@@ -62,6 +72,37 @@ resource "aws_s3_bucket_lifecycle_configuration" "logs" {
 }
 
 data "aws_iam_policy_document" "logs_bucket_policy" {
+  # Blanket deny: anything not from this AWS Organization or an AWS service.
+  # Defense in depth - the public access block already exists; this also blocks
+  # cross-org cross-account principals attempting to use the bucket.
+  statement {
+    sid    = "DenyExternalPrincipals"
+    effect = "Deny"
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+    actions = [
+      "s3:GetObject",
+      "s3:GetObjectVersion",
+      "s3:ListBucket",
+      "s3:PutObject",
+      "s3:DeleteObject",
+    ]
+    resources = [aws_s3_bucket.logs.arn, "${aws_s3_bucket.logs.arn}/*"]
+    condition {
+      test     = "StringNotEqualsIfExists"
+      variable = "aws:PrincipalOrgID"
+      values   = [var.org_id]
+    }
+    condition {
+      test     = "BoolIfExists"
+      variable = "aws:PrincipalIsAWSService"
+      values   = ["false"]
+    }
+  }
+
+  # All traffic must be TLS
   statement {
     sid    = "DenyNonSecureTransport"
     effect = "Deny"
@@ -78,6 +119,11 @@ data "aws_iam_policy_document" "logs_bucket_policy" {
     }
   }
 
+  # CloudTrail PutObject - tightly scoped:
+  #   - org-wide via aws:SourceOrgID
+  #   - source account = management (aws:SourceAccount) to prevent confused deputy
+  #   - if expected_cloudtrail_arn is supplied, also pin to that exact trail ARN
+  #   - require bucket-owner-full-control ACL (AWS best practice)
   statement {
     sid    = "AllowOrgCloudTrailWrite"
     effect = "Allow"
@@ -87,13 +133,34 @@ data "aws_iam_policy_document" "logs_bucket_policy" {
     }
     actions   = ["s3:PutObject"]
     resources = ["${aws_s3_bucket.logs.arn}/cloudtrail/*"]
+
     condition {
       test     = "StringEquals"
       variable = "aws:SourceOrgID"
       values   = [var.org_id]
     }
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceAccount"
+      values   = [var.management_account_id]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "s3:x-amz-acl"
+      values   = ["bucket-owner-full-control"]
+    }
+
+    dynamic "condition" {
+      for_each = var.expected_cloudtrail_arn != "" ? [1] : []
+      content {
+        test     = "ArnEquals"
+        variable = "aws:SourceArn"
+        values   = [var.expected_cloudtrail_arn]
+      }
+    }
   }
 
+  # CloudTrail bucket ACL check - read-only, scoped to management account
   statement {
     sid    = "AllowCloudTrailGetBucketAcl"
     effect = "Allow"
@@ -103,8 +170,24 @@ data "aws_iam_policy_document" "logs_bucket_policy" {
     }
     actions   = ["s3:GetBucketAcl"]
     resources = [aws_s3_bucket.logs.arn]
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceAccount"
+      values   = [var.management_account_id]
+    }
+
+    dynamic "condition" {
+      for_each = var.expected_cloudtrail_arn != "" ? [1] : []
+      content {
+        test     = "ArnEquals"
+        variable = "aws:SourceArn"
+        values   = [var.expected_cloudtrail_arn]
+      }
+    }
   }
 
+  # AWS Config writes - org-wide, optionally pinned to specific aggregator accounts
   statement {
     sid    = "AllowConfigWrite"
     effect = "Allow"
@@ -117,10 +200,26 @@ data "aws_iam_policy_document" "logs_bucket_policy" {
       aws_s3_bucket.logs.arn,
       "${aws_s3_bucket.logs.arn}/config/*"
     ]
+
     condition {
       test     = "StringEquals"
       variable = "aws:SourceOrgID"
       values   = [var.org_id]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "s3:x-amz-acl"
+      values   = ["bucket-owner-full-control"]
+    }
+
+    dynamic "condition" {
+      for_each = length(var.expected_config_account_ids) > 0 ? [1] : []
+      content {
+        test     = "StringEquals"
+        variable = "aws:SourceAccount"
+        values   = var.expected_config_account_ids
+      }
     }
   }
 }

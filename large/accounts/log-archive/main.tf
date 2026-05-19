@@ -19,6 +19,11 @@ module "log_archive_bucket" {
   kms_key_arn                = module.kms.key_arn
   object_lock_retention_days = var.object_lock_retention_days
 
+  # Pin CloudTrail PutObject to this exact trail ARN (tightest scoping).
+  # The trail is created in modules/cloudtrail with name "<org_name>-org-trail".
+  expected_cloudtrail_arn     = "arn:aws:cloudtrail:${var.region}:${var.management_account_id}:trail/${var.org_name}-org-trail"
+  expected_config_account_ids = [var.security_account_id, var.management_account_id]
+
   # Cross-account AuditReader role - assumable by anyone in the security account.
   # SecurityEngineers and Auditors SSO groups (in management) get permission to
   # assume this role via their permission sets to query the centralized logs

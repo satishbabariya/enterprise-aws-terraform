@@ -25,6 +25,16 @@ variable "cloudwatch_log_retention_days" {
   default     = 365
 }
 
+variable "cloudwatch_log_group_class" {
+  description = "Log group storage class: STANDARD or INFREQUENT_ACCESS. IA is ~50% cheaper for archive logs that are rarely queried in real time."
+  type        = string
+  default     = "STANDARD"
+  validation {
+    condition     = contains(["STANDARD", "INFREQUENT_ACCESS"], var.cloudwatch_log_group_class)
+    error_message = "cloudwatch_log_group_class must be STANDARD or INFREQUENT_ACCESS."
+  }
+}
+
 variable "alarms_sns_topic_arn" {
   description = "SNS topic to receive CIS metric filter alarms (typically the central 'high' severity topic). Empty disables alarm wiring."
   type        = string

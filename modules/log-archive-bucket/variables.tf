@@ -14,8 +14,26 @@ variable "org_id" {
 }
 
 variable "management_account_id" {
-  description = "Management account ID - allowed to read and manage the bucket."
+  description = "Management account ID - source account for the org CloudTrail writes (used in aws:SourceAccount condition)."
   type        = string
+}
+
+variable "expected_cloudtrail_arn" {
+  description = <<-EOT
+    ARN of the org CloudTrail. If supplied, the bucket policy enforces that
+    CloudTrail's PutObject calls come from this exact trail via aws:SourceArn.
+    Construct as:
+      arn:aws:cloudtrail:<region>:<management_account_id>:trail/<org_name>-org-trail
+    Empty falls back to org-ID-only scoping (less strict).
+  EOT
+  type        = string
+  default     = ""
+}
+
+variable "expected_config_account_ids" {
+  description = "AWS account IDs allowed to write Config snapshots to this bucket via aws:SourceAccount. Typically the security account (Config aggregator) plus any per-account recorders."
+  type        = list(string)
+  default     = []
 }
 
 variable "kms_key_arn" {
