@@ -1,0 +1,9 @@
+org_name              = "acme"
+region                = "us-east-1"
+repo_url              = "https://github.com/acme/enterprise-aws-terraform"
+github_org            = "acme"
+github_repo           = "enterprise-aws-terraform"
+management_account_id = "111111111111"
+sso_instance_arn      = "arn:aws:sso:::instance/ssoins-PLACEHOLDER"
+identity_store_id     = "d-PLACEHOLDER"
+allowed_regions       = ["us-east-1", "us-west-2"]

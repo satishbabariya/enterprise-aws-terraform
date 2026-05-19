@@ -1,0 +1,14 @@
+org_name              = "acme"
+region                = "us-east-1"
+repo_url              = "https://github.com/acme/enterprise-aws-terraform"
+account_id            = "666666666666"
+account_name          = "prod"
+environment           = "prod"
+github_org            = "acme"
+github_repo           = "enterprise-aws-terraform"
+vpc_cidr              = "10.1.0.0/16"
+public_subnet_cidrs   = ["10.1.0.0/24", "10.1.1.0/24", "10.1.2.0/24"]
+private_subnet_cidrs  = ["10.1.10.0/24", "10.1.11.0/24", "10.1.12.0/24"]
+isolated_subnet_cidrs = ["10.1.20.0/24", "10.1.21.0/24", "10.1.22.0/24"]
+enable_nat_gateway    = true
+single_nat_gateway    = false

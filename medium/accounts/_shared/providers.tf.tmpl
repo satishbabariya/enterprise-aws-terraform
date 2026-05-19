@@ -1,0 +1,16 @@
+# Replace <ACCOUNT_ID> and <ACCOUNT_NAME> before use.
+provider "aws" {
+  region = local.region
+
+  assume_role {
+    role_arn     = "arn:aws:iam::<ACCOUNT_ID>:role/<ACCOUNT_NAME>-terraform-ci"
+    session_name = "terraform"
+  }
+
+  default_tags {
+    tags = merge(local.common_tags, {
+      Account     = "<ACCOUNT_NAME>"
+      Environment = "<ENVIRONMENT>"
+    })
+  }
+}

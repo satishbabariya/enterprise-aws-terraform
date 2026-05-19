@@ -1,0 +1,14 @@
+org_name              = "acme"
+region                = "us-east-1"
+repo_url              = "https://github.com/acme/enterprise-aws-terraform"
+account_id            = "999999999999"
+account_name          = "sandbox"
+environment           = "sandbox"
+github_org            = "acme"
+github_repo           = "enterprise-aws-terraform"
+vpc_cidr              = "10.4.0.0/16"
+public_subnet_cidrs   = ["10.4.0.0/24", "10.4.1.0/24", "10.4.2.0/24"]
+private_subnet_cidrs  = ["10.4.10.0/24", "10.4.11.0/24", "10.4.12.0/24"]
+isolated_subnet_cidrs = ["10.4.20.0/24", "10.4.21.0/24", "10.4.22.0/24"]
+enable_nat_gateway    = false
+single_nat_gateway    = false
