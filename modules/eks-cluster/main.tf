@@ -230,10 +230,10 @@ resource "aws_eks_addon" "this" {
 
   configuration_values = each.value.configuration_values
 
-  service_account_role_arn = coalesce(
+  service_account_role_arn = try(coalesce(
     each.value.service_account_role_arn,
     try(aws_iam_role.irsa[each.key].arn, null),
-  )
+  ), null)
 
   resolve_conflicts_on_create = each.value.resolve_conflicts_on_create
   resolve_conflicts_on_update = each.value.resolve_conflicts_on_update

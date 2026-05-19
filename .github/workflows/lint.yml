@@ -1,0 +1,147 @@
+name: Lint
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '**.tf'
+      - '**.tftest.hcl'
+      - '.tflint.hcl'
+      - '.github/workflows/lint.yml'
+  push:
+    branches: [main]
+    paths:
+      - '**.tf'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  fmt:
+    name: terraform fmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.x"
+      - name: Check formatting
+        run: |
+          if ! terraform fmt -check -recursive -diff; then
+            echo "::error::Terraform files are not formatted. Run 'terraform fmt -recursive'."
+            exit 1
+          fi
+
+  validate:
+    name: terraform validate
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dir:
+          - modules/aws-organization
+          - modules/scp-policies
+          - modules/tag-policies
+          - modules/account-baseline
+          - modules/account-vending
+          - modules/workload-baseline
+          - modules/state-backend
+          - modules/kms
+          - modules/identity-center
+          - modules/cloudtrail
+          - modules/cloudtrail-lake
+          - modules/aws-config
+          - modules/security-hub
+          - modules/guardduty
+          - modules/guardduty-auto-remediation
+          - modules/macie
+          - modules/inspector
+          - modules/access-analyzer
+          - modules/audit-manager
+          - modules/log-archive-bucket
+          - modules/log-querying
+          - modules/notifications
+          - modules/vpc
+          - modules/route53
+          - modules/tgw-hub
+          - modules/tgw-spoke
+          - modules/network-firewall
+          - modules/dns-firewall
+          - modules/client-vpn
+          - modules/session-manager
+          - modules/waf-baseline
+          - modules/ecs-cluster
+          - modules/eks-cluster
+          - modules/lambda-baseline
+          - modules/rds-baseline
+          - modules/aurora-baseline
+          - modules/dynamodb-baseline
+          - modules/cognito-baseline
+          - modules/ses-baseline
+          - modules/aws-backup
+          - modules/chaos-engineering
+          - modules/cost-management
+          - modules/secrets-baseline
+          - modules/service-catalog
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.x"
+      - name: Validate ${{ matrix.dir }}
+        working-directory: ${{ matrix.dir }}
+        run: |
+          terraform init -backend=false
+          terraform validate
+
+  tflint:
+    name: tflint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: latest
+      - name: Cache tflint plugins
+        uses: actions/cache@v4
+        with:
+          path: ~/.tflint.d/plugins
+          key: tflint-${{ hashFiles('.tflint.hcl') }}
+      - name: tflint --init
+        run: tflint --init
+      - name: tflint (modules)
+        run: |
+          set -e
+          for d in modules/*/; do
+            [ "$d" = "modules/_template/" ] && continue
+            echo "=== tflint $d ==="
+            tflint --chdir="$d" --config="$GITHUB_WORKSPACE/.tflint.hcl"
+          done
+
+  tfsec:
+    name: tfsec
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run tfsec
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          working_directory: modules
+          additional_args: --exclude-downloaded-modules --soft-fail=false
+
+  checkov:
+    name: checkov
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: modules
+          framework: terraform
+          quiet: true
+          soft_fail: false
+          # Skip checks that don't apply at the module level (no apply-time state)
+          skip_check: >-
+            CKV_TF_1,CKV_TF_2

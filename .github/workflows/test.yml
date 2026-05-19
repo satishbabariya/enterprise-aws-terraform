@@ -1,0 +1,46 @@
+name: Terraform Tests
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'modules/**'
+  push:
+    branches: [main]
+    paths:
+      - 'modules/**'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Modules with terraform test files. As more modules add tests,
+        # extend this matrix.
+        module:
+          - cloudtrail
+          - log-archive-bucket
+          - security-hub
+          - guardduty
+          - vpc
+          - eks-cluster
+          - kms
+          - rds-baseline
+          - dynamodb-baseline
+          - lambda-baseline
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.x"
+
+      - name: terraform test (${{ matrix.module }})
+        working-directory: modules/${{ matrix.module }}
+        run: |
+          terraform init -backend=false
+          terraform test

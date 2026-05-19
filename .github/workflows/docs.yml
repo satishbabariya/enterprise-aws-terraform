@@ -1,0 +1,60 @@
+name: Module Docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'modules/**/*.tf'
+      - '.terraform-docs.yaml'
+      - 'scripts/generate-module-docs.sh'
+      - '.github/workflows/docs.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'modules/**/*.tf'
+      - '.terraform-docs.yaml'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install terraform-docs
+        run: |
+          curl -sSLo terraform-docs.tar.gz https://github.com/terraform-docs/terraform-docs/releases/download/v0.18.0/terraform-docs-v0.18.0-linux-amd64.tar.gz
+          tar -xzf terraform-docs.tar.gz
+          sudo mv terraform-docs /usr/local/bin/
+          terraform-docs --version
+
+      - name: Generate module READMEs
+        run: ./scripts/generate-module-docs.sh
+
+      - name: Commit changes (on push to main)
+        if: github.event_name == 'push'
+        run: |
+          if [ -n "$(git status --porcelain modules/)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add modules/*/README.md
+            git commit -m "docs: auto-update module READMEs [skip ci]"
+            git push
+          else
+            echo "No README changes."
+          fi
+
+      - name: Verify no drift (on PR)
+        if: github.event_name == 'pull_request'
+        run: |
+          if [ -n "$(git status --porcelain modules/)" ]; then
+            echo "::error::Module READMEs are out of date. Run ./scripts/generate-module-docs.sh and commit."
+            git diff modules/
+            exit 1
+          fi
