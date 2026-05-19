@@ -262,3 +262,16 @@ See `docs/architecture.md` for the full dependency graph.
 
 See `docs/compliance-matrix.md` for which controls each module implements
 across CIS, SOC 2, PCI-DSS, and HIPAA.
+
+## Operations docs
+
+| Document | When to read it |
+|---|---|
+| [`docs/architecture.md`](docs/architecture.md) | Understanding the overall layout + deployment dependency graph |
+| [`docs/onboarding.md`](docs/onboarding.md) | Greenfield setup, end-to-end |
+| [`docs/access-management.md`](docs/access-management.md) | Personas, SSO groups, break-glass, onboarding humans |
+| [`docs/compliance-matrix.md`](docs/compliance-matrix.md) | Audit evidence — which control maps to which module |
+| [`docs/multi-region-strategy.md`](docs/multi-region-strategy.md) | Designing for cross-region resilience |
+| [`docs/migration-from-existing-org.md`](docs/migration-from-existing-org.md) | **Bringing an existing AWS Org into this template** — 8–12 week phased plan |
+| [`docs/disaster-recovery-runbook.md`](docs/disaster-recovery-runbook.md) | **Concrete step-by-step procedures** for Aurora failover, log archive recovery, region outage, compromised credentials, etc. |
+| [`docs/cost-analysis.md`](docs/cost-analysis.md) | **Itemized monthly cost breakdown** at medium and large scale, with the levers that drive cost up |
