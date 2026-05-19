@@ -8,7 +8,7 @@
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 5.0 |
 
 ## Providers
 
@@ -16,7 +16,7 @@
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 5.0 |
 
 ## Inputs
 
@@ -39,7 +39,7 @@
 
 | Name | Description |
 |------|-------------|
-| <a name="output_finding_aggregator_arn"></a> [finding\_aggregator\_arn](#output\_finding\_aggregator\_arn) | Finding aggregator ARN (empty if disabled) |
+| <a name="output_finding_aggregator_arn"></a> [finding\_aggregator\_arn](#output\_finding\_aggregator\_arn) | Finding aggregator ARN (empty if disabled). The resource id IS the ARN in the AWS provider. |
 | <a name="output_hub_arn"></a> [hub\_arn](#output\_hub\_arn) | Security Hub account resource ID |
 | <a name="output_product_subscription_arns"></a> [product\_subscription\_arns](#output\_product\_subscription\_arns) | Map of product name to subscription ARN |
 <!-- END_TF_DOCS -->
