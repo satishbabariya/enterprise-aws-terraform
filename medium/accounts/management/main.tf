@@ -12,6 +12,34 @@ module "organization" {
   tags     = local.common_tags
 }
 
+# Account vending: creates new accounts via Organizations API for any entry
+# in var.accounts that supplied `email`. Accounts placed directly into the
+# specified OU. Entries with `account_id` already set are skipped (existing accounts).
+locals {
+  accounts_to_vend = {
+    for k, v in var.accounts : k => {
+      email     = v.email
+      ou_id     = module.organization.organizational_unit_ids[v.ou_key]
+      role_name = v.role_name
+    }
+    if v.email != "" && v.account_id == ""
+  }
+}
+
+module "vending" {
+  source   = "../../../modules/account-vending"
+  accounts = local.accounts_to_vend
+  tags     = local.common_tags
+}
+
+# Effective account IDs: use the explicit account_id when supplied, otherwise
+# the ID of the freshly-vended account. Other resources reference this map.
+locals {
+  effective_account_ids = {
+    for k, v in var.accounts : k => v.account_id != "" ? v.account_id : module.vending.account_ids[k]
+  }
+}
+
 module "scps" {
   source          = "../../../modules/scp-policies"
   allowed_regions = var.allowed_regions

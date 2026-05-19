@@ -82,3 +82,13 @@ output "cloudtrail_lake_arn" {
   description = "CloudTrail Lake Event Data Store ARN (7-year retention)"
   value       = module.cloudtrail_lake.event_data_store_arn
 }
+
+output "account_ids" {
+  description = "Effective account ID per account name (vended IDs + existing account_ids). Other roots consume via remote_state."
+  value       = local.effective_account_ids
+}
+
+output "vended_account_ids" {
+  description = "Account IDs of accounts created by this apply (subset of account_ids)"
+  value       = module.vending.account_ids
+}

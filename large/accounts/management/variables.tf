@@ -45,18 +45,39 @@ variable "allowed_regions" {
   default     = ["us-east-1", "us-west-2"]
 }
 
-variable "account_ids" {
-  description = "Map of account-name to 12-digit account ID for SSO group assignments."
-  type = object({
-    security        = string
-    log_archive     = string
-    network         = string
-    shared_services = string
-    prod            = string
-    staging         = string
-    dev             = string
-    sandbox         = string
-  })
+variable "accounts" {
+  description = <<-EOT
+    Foundation + workload accounts the org should know about. For each entry:
+      - `ou_key` is required: which OU to place the account in
+        (keys from modules/aws-organization default OUs: security, infrastructure, workloads, suspended)
+      - Supply `email` to vend a new account via Organizations
+      - Supply `account_id` to reference an existing account (no vending)
+      - At least one of {email, account_id} must be set per entry
+
+    Account creation is irreversible from Terraform - `terraform destroy` only
+    suspends accounts (90-day waiting period). Email addresses must be unique
+    across AWS globally.
+  EOT
+  type = map(object({
+    ou_key     = string
+    email      = optional(string, "")
+    account_id = optional(string, "")
+    role_name  = optional(string, "OrganizationAccountAccessRole")
+  }))
+
+  validation {
+    condition = alltrue([
+      for k, v in var.accounts : v.email != "" || v.account_id != ""
+    ])
+    error_message = "Each account must supply either email (to vend a new account) or account_id (existing)."
+  }
+
+  validation {
+    condition = alltrue([
+      for k, v in var.accounts : contains(["security", "infrastructure", "workloads", "suspended"], v.ou_key)
+    ])
+    error_message = "ou_key must be one of: security, infrastructure, workloads, suspended."
+  }
 }
 
 variable "external_contractor_allowed_ips" {

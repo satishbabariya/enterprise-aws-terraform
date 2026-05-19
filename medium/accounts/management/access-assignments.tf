@@ -136,7 +136,7 @@ locals {
     # PlatformAdmins: full admin in every foundation account
     [
       for acct in ["security", "log_archive", "network", "shared_services"] : {
-        account_id          = var.account_ids[acct]
+        account_id          = local.effective_account_ids[acct]
         permission_set_name = "AdministratorAccess"
         principal_type      = "GROUP"
         principal_id        = "PlatformAdmins"
@@ -152,7 +152,7 @@ locals {
     # AppDevelopersProd: read-only in prod + staging
     [
       for acct in ["prod", "staging"] : {
-        account_id          = var.account_ids[acct]
+        account_id          = local.effective_account_ids[acct]
         permission_set_name = "WorkloadDeveloperProd"
         principal_type      = "GROUP"
         principal_id        = "AppDevelopersProd"
@@ -162,7 +162,7 @@ locals {
     # AppDevelopersNonProd: power user in dev + sandbox + staging
     [
       for acct in ["dev", "sandbox", "staging"] : {
-        account_id          = var.account_ids[acct]
+        account_id          = local.effective_account_ids[acct]
         permission_set_name = "WorkloadDeveloperNonProd"
         principal_type      = "GROUP"
         principal_id        = "AppDevelopersNonProd"
@@ -172,7 +172,7 @@ locals {
     # SecurityEngineers: SecurityResponder in security + log-archive, SecurityAudit everywhere else
     [
       for acct in ["security", "log_archive"] : {
-        account_id          = var.account_ids[acct]
+        account_id          = local.effective_account_ids[acct]
         permission_set_name = "SecurityResponder"
         principal_type      = "GROUP"
         principal_id        = "SecurityEngineers"
@@ -180,7 +180,7 @@ locals {
     ],
     [
       for acct in ["network", "shared_services", "prod", "staging", "dev", "sandbox"] : {
-        account_id          = var.account_ids[acct]
+        account_id          = local.effective_account_ids[acct]
         permission_set_name = "SecurityAudit"
         principal_type      = "GROUP"
         principal_id        = "SecurityEngineers"
@@ -196,7 +196,7 @@ locals {
     # Auditors: read-only across every account
     [
       for acct in ["security", "log_archive", "network", "shared_services", "prod", "staging", "dev", "sandbox"] : {
-        account_id          = var.account_ids[acct]
+        account_id          = local.effective_account_ids[acct]
         permission_set_name = "ReadOnlyAccess"
         principal_type      = "GROUP"
         principal_id        = "Auditors"
@@ -220,7 +220,7 @@ locals {
     # ExternalContractors: ExternalContractor permission set in dev + sandbox only
     [
       for acct in ["dev", "sandbox"] : {
-        account_id          = var.account_ids[acct]
+        account_id          = local.effective_account_ids[acct]
         permission_set_name = "ExternalContractor"
         principal_type      = "GROUP"
         principal_id        = "ExternalContractors"
@@ -230,7 +230,7 @@ locals {
     # BreakGlass: short-session admin in every account
     [
       for acct in ["security", "log_archive", "network", "shared_services", "prod", "staging", "dev", "sandbox"] : {
-        account_id          = var.account_ids[acct]
+        account_id          = local.effective_account_ids[acct]
         permission_set_name = "BreakGlassAdmin"
         principal_type      = "GROUP"
         principal_id        = "BreakGlass"
