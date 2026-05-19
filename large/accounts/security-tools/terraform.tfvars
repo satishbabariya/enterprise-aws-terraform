@@ -1,0 +1,6 @@
+org_name    = "acme"
+region      = "us-east-1"
+repo_url    = "https://github.com/acme/enterprise-aws-terraform"
+account_id  = "100000000002"
+github_org  = "acme"
+github_repo = "enterprise-aws-terraform"

@@ -1,0 +1,7 @@
+org_name                   = "acme"
+region                     = "us-east-1"
+repo_url                   = "https://github.com/acme/enterprise-aws-terraform"
+org_id                     = "o-PLACEHOLDER"
+shared_services_account_id = "555555555555"
+github_org                 = "acme"
+github_repo                = "enterprise-aws-terraform"

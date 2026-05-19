@@ -1,0 +1,6 @@
+# Replace <ACCOUNT_NAME> with the account directory name before running terraform init.
+bucket         = "acme-us-east-1-tfstate"
+key            = "<ACCOUNT_NAME>/terraform.tfstate"
+region         = "us-east-1"
+dynamodb_table = "acme-us-east-1-tfstate-lock"
+encrypt        = true
