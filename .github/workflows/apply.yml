@@ -1,0 +1,53 @@
+name: Terraform Apply
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'medium/accounts/**'
+      - 'large/accounts/**'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.x"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.MANAGEMENT_ACCOUNT_ID }}:role/acme-management-terraform-ci
+          aws-region: us-east-1
+
+      - name: Apply accounts in dependency order
+        run: |
+          set -e
+          ACCOUNTS=(
+            "medium/accounts/management"
+            "medium/accounts/log-archive"
+            "medium/accounts/security"
+            "medium/accounts/network"
+            "medium/accounts/shared-services"
+            "medium/accounts/prod"
+            "medium/accounts/staging"
+            "medium/accounts/dev"
+            "medium/accounts/sandbox"
+          )
+          for dir in "${ACCOUNTS[@]}"; do
+            echo "=== Applying $dir ==="
+            cd $dir
+            terraform init -input=false
+            terraform apply -auto-approve -input=false
+            cd $GITHUB_WORKSPACE
+          done

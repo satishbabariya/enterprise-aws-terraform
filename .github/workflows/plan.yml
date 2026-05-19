@@ -1,0 +1,112 @@
+name: Terraform Plan
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'medium/accounts/**'
+      - 'large/accounts/**'
+      - 'modules/**'
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      accounts: ${{ steps.filter.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect changed account roots
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            medium-management:
+              - 'medium/accounts/management/**'
+            medium-log-archive:
+              - 'medium/accounts/log-archive/**'
+            medium-security:
+              - 'medium/accounts/security/**'
+            medium-network:
+              - 'medium/accounts/network/**'
+            medium-shared-services:
+              - 'medium/accounts/shared-services/**'
+            medium-prod:
+              - 'medium/accounts/prod/**'
+            medium-staging:
+              - 'medium/accounts/staging/**'
+            medium-dev:
+              - 'medium/accounts/dev/**'
+            medium-sandbox:
+              - 'medium/accounts/sandbox/**'
+
+  plan:
+    needs: detect-changes
+    runs-on: ubuntu-latest
+    if: ${{ needs.detect-changes.outputs.accounts != '[]' && needs.detect-changes.outputs.accounts != '' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        account: ${{ fromJSON(needs.detect-changes.outputs.accounts) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.x"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.MANAGEMENT_ACCOUNT_ID }}:role/acme-management-terraform-ci
+          aws-region: us-east-1
+
+      - name: Resolve account path
+        id: path
+        run: |
+          ACCOUNT="${{ matrix.account }}"
+          PREFIX=$(echo $ACCOUNT | cut -d- -f1)
+          NAME=$(echo $ACCOUNT | cut -d- -f2-)
+          echo "dir=${PREFIX}/accounts/${NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Terraform Init
+        working-directory: ${{ steps.path.outputs.dir }}
+        run: terraform init
+
+      - name: Terraform Validate
+        working-directory: ${{ steps.path.outputs.dir }}
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        working-directory: ${{ steps.path.outputs.dir }}
+        run: terraform plan -no-color -out=tfplan 2>&1 | tee plan.txt
+        continue-on-error: true
+
+      - name: Comment plan on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('${{ steps.path.outputs.dir }}/plan.txt', 'utf8');
+            const output = `## Terraform Plan — \`${{ matrix.account }}\`
+            \`\`\`
+            ${plan.substring(0, 65000)}
+            \`\`\`
+            *Pushed by @${{ github.actor }}*`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            });
+
+      - name: Fail if plan errored
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
