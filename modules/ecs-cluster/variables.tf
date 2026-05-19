@@ -8,10 +8,20 @@ variable "kms_key_arn" {
   type        = string
 }
 
-variable "enable_container_insights" {
-  description = "Enable CloudWatch Container Insights."
-  type        = bool
-  default     = true
+variable "container_insights_mode" {
+  description = <<-EOT
+    Container Insights mode:
+    - "enhanced" - newer mode (Nov 2024+) with per-task/service granularity + Application Signals support
+    - "enabled"  - legacy mode (cluster-level metrics only)
+    - "disabled" - off
+    Enhanced is recommended for prod - the data is what you need during incident response.
+  EOT
+  type        = string
+  default     = "enhanced"
+  validation {
+    condition     = contains(["enhanced", "enabled", "disabled"], var.container_insights_mode)
+    error_message = "container_insights_mode must be enhanced, enabled, or disabled."
+  }
 }
 
 variable "fargate_capacity_providers" {

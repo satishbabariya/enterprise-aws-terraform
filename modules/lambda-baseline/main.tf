@@ -6,7 +6,8 @@ resource "aws_cloudwatch_log_group" "this" {
 }
 
 resource "aws_iam_role" "this" {
-  name = "${var.name}-execution"
+  name                 = "${var.name}-execution"
+  permissions_boundary = var.permissions_boundary_arn != "" ? var.permissions_boundary_arn : null
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -36,6 +37,19 @@ resource "aws_iam_role_policy_attachment" "xray" {
   policy_arn = "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess"
 }
 
+resource "aws_iam_role_policy_attachment" "insights" {
+  count      = var.enable_lambda_insights ? 1 : 0
+  role       = aws_iam_role.this.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchLambdaInsightsExecutionRolePolicy"
+}
+
+locals {
+  effective_layers = concat(
+    var.layers,
+    var.enable_lambda_insights && var.lambda_insights_layer_arn != "" ? [var.lambda_insights_layer_arn] : [],
+  )
+}
+
 resource "aws_lambda_function" "this" {
   function_name = var.name
   role          = aws_iam_role.this.arn
@@ -50,7 +64,9 @@ resource "aws_lambda_function" "this" {
   timeout                        = var.timeout
   architectures                  = var.architectures
   reserved_concurrent_executions = var.reserved_concurrent_executions
+  publish                        = var.publish_version
 
+  layers      = length(local.effective_layers) > 0 ? local.effective_layers : null
   kms_key_arn = var.kms_key_arn
 
   dynamic "environment" {
@@ -85,4 +101,11 @@ resource "aws_lambda_function" "this" {
     aws_cloudwatch_log_group.this,
     aws_iam_role_policy_attachment.basic,
   ]
+}
+
+resource "aws_lambda_function_url" "this" {
+  count = var.function_url_enabled ? 1 : 0
+
+  function_name      = aws_lambda_function.this.function_name
+  authorization_type = var.function_url_authorization_type
 }

@@ -22,3 +22,13 @@ output "log_group_name" {
   description = "Lambda CloudWatch log group name"
   value       = aws_cloudwatch_log_group.this.name
 }
+
+output "function_url" {
+  description = "Function URL (empty if disabled). Public HTTPS endpoint - signed requests required if authorization_type = AWS_IAM."
+  value       = try(aws_lambda_function_url.this[0].function_url, "")
+}
+
+output "version" {
+  description = "Latest published version (only meaningful if publish_version = true)"
+  value       = aws_lambda_function.this.version
+}
