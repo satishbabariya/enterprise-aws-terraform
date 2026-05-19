@@ -20,9 +20,9 @@ flowchart TB
       direction TB
 
       subgraph SEC["Security OU"]
-        MGMT["management<br/>━━━━━━━━━<br/>Org + SCPs + Tag Policies<br/>Identity Center personas<br/>CloudTrail org-trail<br/>OIDC provider + CI roles<br/>SNS by severity<br/>CUR + Cost Anomaly Detection<br/>Service Catalog"]:::mgmt
-        SECURITY["security<br/>━━━━━━━━━<br/>Security Hub delegated admin<br/>GuardDuty + auto-remediation<br/>AWS Config + conformance packs<br/>Macie / Inspector / Access Analyzer<br/>Audit Manager<br/>Athena + Glue over log archive<br/>Central AWS Backup vault"]:::sec
-        LOG["log-archive<br/>━━━━━━━━━<br/>Centralized S3 bucket<br/>S3 Object Lock - WORM<br/>Cross-region replication<br/>CloudTrail / VPC flow logs / Config<br/>SES bounce + complaint sink"]:::sec
+        MGMT["management<br/>━━━━━━━━━<br/>Org + OUs + SCPs + Tag Policies<br/>Account Vending (Org API)<br/>Identity Center personas + groups<br/>CloudTrail org-trail<br/>(15 CIS metric filters + alarms)<br/>CloudTrail Lake (7y SQL retention)<br/>OIDC provider + CI roles<br/>SNS by severity → PagerDuty/Slack<br/>CUR + Cost Anomaly Detection<br/>Service Catalog<br/>Multi-region KMS"]:::mgmt
+        SECURITY["security<br/>━━━━━━━━━<br/>Security Hub (CIS + PCI + NIST)<br/>+ finding aggregator + automation rules<br/>GuardDuty + Runtime Monitoring<br/>+ auto-remediation Lambdas<br/>AWS Config + conformance packs<br/>+ managed rules<br/>Macie / Inspector / Access Analyzer<br/>Audit Manager (delegated admin)<br/>Athena + Glue + saved queries<br/>Central AWS Backup vault"]:::sec
+        LOG["log-archive<br/>━━━━━━━━━<br/>Centralized S3 (Object Lock WORM)<br/>Cross-region replication via MRK<br/>CloudTrail / VPC flow logs / Config<br/>AuditReader cross-account role<br/>(security account assumes)<br/>SES bounce + complaint sink"]:::sec
       end
 
       subgraph INF["Infrastructure OU"]
@@ -31,7 +31,7 @@ flowchart TB
       end
 
       subgraph WL["Workloads OU"]
-        PROD["prod"]:::wl
+        PROD["prod<br/>━━━━━━━━━<br/>workload-baseline<br/>(KMS + Secrets Manager + OIDC role)<br/>VPC + TGW spoke + EKS subnet tags<br/>Backup=true tagged resources"]:::wl
         STAGE["staging"]:::wl
         DEV["dev"]:::wl
         SBX["sandbox"]:::wl
@@ -67,6 +67,9 @@ flowchart TB
     NET ===|Transit Gateway via RAM| DEV
 
     SECURITY -->|alerts| MGMT
+    SECURITY -->|sts:AssumeRole AuditReader| LOG
+
+    GH -->|Conftest policy-check<br/>(Rego over plan.json)| MGMT
 ```
 
 **Legend** — yellow: management trust root · red: security/audit accounts · blue: shared infrastructure · green: workloads · solid arrows: IAM trust · dotted: telemetry/logging · double lines: network connectivity
