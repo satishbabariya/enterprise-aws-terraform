@@ -91,6 +91,7 @@ jobs:
           - modules/ses-baseline
           - modules/aws-backup
           - modules/chaos-engineering
+          - examples/sample-workload-ecs
           - modules/secrets-baseline
           - modules/service-catalog
     steps:

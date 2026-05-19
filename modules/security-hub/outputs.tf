@@ -4,8 +4,8 @@ output "hub_arn" {
 }
 
 output "finding_aggregator_arn" {
-  description = "Finding aggregator ARN (empty if disabled)"
-  value       = try(aws_securityhub_finding_aggregator.this[0].arn, "")
+  description = "Finding aggregator ARN (empty if disabled). The resource id IS the ARN in the AWS provider."
+  value       = try(aws_securityhub_finding_aggregator.this[0].id, "")
 }
 
 output "product_subscription_arns" {

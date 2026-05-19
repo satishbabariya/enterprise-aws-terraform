@@ -197,7 +197,7 @@ resource "aws_iam_role_policy" "proxy" {
         Resource = var.kms_key_arn
         Condition = {
           StringEquals = {
-            "kms:ViaService" = "secretsmanager.${data.aws_region.current.region}.amazonaws.com"
+            "kms:ViaService" = "secretsmanager.${data.aws_region.current.name}.amazonaws.com"
           }
         }
       }

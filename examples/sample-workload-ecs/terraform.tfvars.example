@@ -1,0 +1,28 @@
+org_name     = "acme"
+region       = "us-east-1"
+account_id   = "666666666666"
+account_name = "prod"
+environment  = "prod"
+repo_url     = "https://github.com/acme/enterprise-aws-terraform"
+github_org   = "acme"
+github_repo  = "enterprise-aws-terraform"
+cost_center  = "engineering"
+
+# From the log-archive root's terraform output
+log_archive_bucket_arn  = "arn:aws:s3:::acme-us-east-1-log-archive"
+log_archive_bucket_name = "acme-us-east-1-log-archive"
+
+# Application
+app_name          = "checkout-api"
+app_image         = "666666666666.dkr.ecr.us-east-1.amazonaws.com/checkout-api:v1.2.3"
+app_port          = 8080
+app_cpu           = 1024
+app_memory        = 2048
+app_desired_count = 3
+
+# Public-facing
+domain_name         = "api.acme.com"
+acm_certificate_arn = "arn:aws:acm:us-east-1:666666666666:certificate/abc123-def456"
+
+# Network
+vpc_cidr = "10.50.0.0/16"

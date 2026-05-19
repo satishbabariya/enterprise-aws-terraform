@@ -182,6 +182,59 @@ flowchart TB
 - Terraform >= 1.9
 - AWS CLI configured with management account credentials
 - GitHub repository (for OIDC trust)
+- AWS provider 5.x (pinned via `~> 5.0` in every module — see [Provider pinning](#provider-pinning))
+
+## Local developer setup
+
+The repo ships pre-commit hooks and a set of CI gates that you can run
+locally before pushing.
+
+```bash
+# Install the tools (macOS - adjust for your OS)
+brew install terraform terraform-docs pre-commit checkov
+brew install terraform-linters/tap/tflint   # arm64 macs: arch -arm64 brew install ...
+arch -arm64 brew install tfsec              # arm64 macs
+
+# Initialize pre-commit hooks - runs fmt/validate/tflint/docs/checkov on every commit
+pre-commit install
+
+# Sanity-check the toolchain
+terraform fmt -check -recursive
+tflint --init
+./scripts/generate-module-docs.sh
+```
+
+### Running CI gates locally
+
+| Gate | Command |
+|---|---|
+| Format | `terraform fmt -check -recursive` |
+| Validate one module | `cd modules/<name> && terraform init -backend=false && terraform validate` |
+| Lint one module | `tflint --chdir=modules/<name> --config="$PWD/.tflint.hcl"` |
+| Security scan (tfsec) | `tfsec modules` |
+| Security scan (checkov) | `checkov -d modules --config-file .checkov.yml` |
+| Module unit tests | `cd modules/<name> && terraform test` |
+| Conftest policies | `conftest test plan.json --policy ./policies/` (after a `terraform show -json`) |
+
+## Provider pinning
+
+Every module pins the AWS provider to `~> 5.0` (>= 5.0, < 6.0). This:
+
+- Permits any 5.x minor/patch upgrade (bug fixes, new resources)
+- Blocks the next major (e.g., 6.x), which historically introduces breaking changes
+- Tested against AWS provider 5.x throughout
+
+If you need to test against 6.x, edit `modules/*/versions.tf` and adjust the
+constraint. Several attribute renames between 5.x → 6.x affect this template
+(`data.aws_region.current.name` → `.region`, `aws_securityhub_finding_aggregator.id` → `.arn`).
+The compatibility audit is tracked in `docs/multi-region-strategy.md`.
+
+## End-to-end example
+
+See [`examples/sample-workload-ecs/`](examples/sample-workload-ecs) — a
+complete deployment using `workload-baseline` + `vpc` + `ecs-cluster` +
+`aurora-baseline` + `waf-baseline` to run a containerized app behind an
+HTTPS ALB with managed credentials and central backup tagging.
 
 ## First-time setup
 

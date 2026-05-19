@@ -21,13 +21,13 @@ resource "aws_securityhub_standards_subscription" "cis" {
 
 resource "aws_securityhub_standards_subscription" "pci" {
   count         = var.enable_pci_standard ? 1 : 0
-  standards_arn = "arn:${data.aws_partition.current.partition}:securityhub:${data.aws_region.current.region}::standards/pci-dss/v/3.2.1"
+  standards_arn = "arn:${data.aws_partition.current.partition}:securityhub:${data.aws_region.current.name}::standards/pci-dss/v/3.2.1"
   depends_on    = [aws_securityhub_account.this]
 }
 
 resource "aws_securityhub_standards_subscription" "nist" {
   count         = var.enable_nist_standard ? 1 : 0
-  standards_arn = "arn:${data.aws_partition.current.partition}:securityhub:${data.aws_region.current.region}::standards/nist-800-53/v/5.0.0"
+  standards_arn = "arn:${data.aws_partition.current.partition}:securityhub:${data.aws_region.current.name}::standards/nist-800-53/v/5.0.0"
   depends_on    = [aws_securityhub_account.this]
 }
 
@@ -70,7 +70,7 @@ locals {
 resource "aws_securityhub_product_subscription" "this" {
   for_each = local.enabled_product_subscriptions
 
-  product_arn = "arn:${data.aws_partition.current.partition}:securityhub:${data.aws_region.current.region}::product/aws/${local.product_arn_names[each.key]}"
+  product_arn = "arn:${data.aws_partition.current.partition}:securityhub:${data.aws_region.current.name}::product/aws/${local.product_arn_names[each.key]}"
 
   depends_on = [aws_securityhub_account.this]
 }
