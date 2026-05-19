@@ -7,11 +7,16 @@ on:
       - '**.tf'
       - '**.tftest.hcl'
       - '.tflint.hcl'
+      - '.checkov.yml'
       - '.github/workflows/lint.yml'
   push:
     branches: [main]
     paths:
       - '**.tf'
+      - '.tflint.hcl'
+      - '.checkov.yml'
+      - '.github/workflows/lint.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
