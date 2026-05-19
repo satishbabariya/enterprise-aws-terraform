@@ -1,11 +1,26 @@
 name: Terraform Apply
 
+# Manual-trigger only. Auto-apply on push to main is intentionally disabled -
+# infrastructure changes should require human review of the PR plan first.
+# Run via:
+#   GitHub UI: Actions tab -> Terraform Apply -> Run workflow
+#   gh CLI:    gh workflow run "Terraform Apply" --field scale=medium
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'medium/accounts/**'
-      - 'large/accounts/**'
+  workflow_dispatch:
+    inputs:
+      scale:
+        description: "Which deployment to apply"
+        required: true
+        type: choice
+        default: medium
+        options:
+          - medium
+          - large
+      confirm:
+        description: "Type APPLY to confirm (defense against accidental dispatch)"
+        required: true
+        type: string
+        default: ""
 
 permissions:
   id-token: write
@@ -15,6 +30,7 @@ jobs:
   apply:
     runs-on: ubuntu-latest
     environment: production
+    if: github.event.inputs.confirm == 'APPLY'
 
     steps:
       - uses: actions/checkout@v4
@@ -33,21 +49,48 @@ jobs:
       - name: Apply accounts in dependency order
         run: |
           set -e
-          ACCOUNTS=(
-            "medium/accounts/management"
-            "medium/accounts/log-archive"
-            "medium/accounts/security"
-            "medium/accounts/network"
-            "medium/accounts/shared-services"
-            "medium/accounts/prod"
-            "medium/accounts/staging"
-            "medium/accounts/dev"
-            "medium/accounts/sandbox"
-          )
+
+          case "${{ github.event.inputs.scale }}" in
+            medium)
+              ACCOUNTS=(
+                "medium/accounts/management"
+                "medium/accounts/log-archive"
+                "medium/accounts/security"
+                "medium/accounts/network"
+                "medium/accounts/shared-services"
+                "medium/accounts/prod"
+                "medium/accounts/staging"
+                "medium/accounts/dev"
+                "medium/accounts/sandbox"
+              )
+              ;;
+            large)
+              ACCOUNTS=(
+                "large/accounts/management"
+                "large/accounts/log-archive"
+                "large/accounts/security"
+                "large/accounts/network"
+                "large/accounts/shared-services"
+                "large/accounts/data-platform"
+                "large/accounts/security-tools"
+                "large/accounts/bu-alpha/dev"
+                "large/accounts/bu-alpha/staging"
+                "large/accounts/bu-alpha/prod"
+                "large/accounts/bu-beta/dev"
+                "large/accounts/bu-beta/staging"
+                "large/accounts/bu-beta/prod"
+              )
+              ;;
+            *)
+              echo "Unknown scale: ${{ github.event.inputs.scale }}"
+              exit 1
+              ;;
+          esac
+
           for dir in "${ACCOUNTS[@]}"; do
             echo "=== Applying $dir ==="
-            cd $dir
+            cd "$dir"
             terraform init -input=false
             terraform apply -auto-approve -input=false
-            cd $GITHUB_WORKSPACE
+            cd "$GITHUB_WORKSPACE"
           done
