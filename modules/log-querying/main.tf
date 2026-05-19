@@ -8,6 +8,21 @@ resource "aws_s3_bucket" "results" {
   tags   = var.tags
 }
 
+resource "aws_s3_bucket_versioning" "results" {
+  count  = var.athena_results_bucket_name == "" ? 1 : 0
+  bucket = aws_s3_bucket.results[0].id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_logging" "results" {
+  count         = var.athena_results_bucket_name == "" ? 1 : 0
+  bucket        = aws_s3_bucket.results[0].id
+  target_bucket = var.log_archive_bucket_name
+  target_prefix = "s3-access-logs/${var.org_name}-athena-results/"
+}
+
 resource "aws_s3_bucket_server_side_encryption_configuration" "results" {
   count  = var.athena_results_bucket_name == "" ? 1 : 0
   bucket = aws_s3_bucket.results[0].id
@@ -32,12 +47,22 @@ resource "aws_s3_bucket_public_access_block" "results" {
 resource "aws_s3_bucket_lifecycle_configuration" "results" {
   count  = var.athena_results_bucket_name == "" ? 1 : 0
   bucket = aws_s3_bucket.results[0].id
+
   rule {
     id     = "expire-old-results"
     status = "Enabled"
     filter {}
     expiration {
       days = var.query_result_retention_days
+    }
+  }
+
+  rule {
+    id     = "abort-incomplete-multipart"
+    status = "Enabled"
+    filter {}
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
     }
   }
 }

@@ -142,6 +142,4 @@ jobs:
           framework: terraform
           quiet: true
           soft_fail: false
-          # Skip checks that don't apply at the module level (no apply-time state)
-          skip_check: >-
-            CKV_TF_1,CKV_TF_2
+          config_file: .checkov.yml

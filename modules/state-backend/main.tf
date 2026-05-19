@@ -41,11 +41,25 @@ resource "aws_s3_bucket_logging" "tfstate" {
 
 resource "aws_s3_bucket_lifecycle_configuration" "tfstate" {
   bucket = aws_s3_bucket.tfstate.id
+
   rule {
     id     = "expire-noncurrent"
     status = "Enabled"
     filter {}
-    noncurrent_version_expiration { noncurrent_days = 90 }
+    noncurrent_version_expiration {
+      noncurrent_days = 90
+    }
+  }
+
+  # Aborts failed multipart uploads after 7 days - prevents orphaned upload
+  # parts from accumulating cost in the state bucket.
+  rule {
+    id     = "abort-incomplete-multipart"
+    status = "Enabled"
+    filter {}
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
   }
 }
 

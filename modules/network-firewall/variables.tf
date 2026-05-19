@@ -13,6 +13,12 @@ variable "firewall_subnet_ids" {
   type        = list(string)
 }
 
+variable "kms_key_arn" {
+  description = "Customer-managed KMS key ARN for encrypting Network Firewall configuration (firewall + policy). Empty uses AWS-owned key."
+  type        = string
+  default     = ""
+}
+
 variable "domain_allowlist" {
   description = "Domains that egress is permitted to. Wildcard subdomains via .example.com syntax. Empty list means no allowlist enforcement."
   type        = list(string)

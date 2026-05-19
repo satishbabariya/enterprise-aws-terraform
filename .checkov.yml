@@ -1,0 +1,131 @@
+# Checkov configuration
+# https://www.checkov.io/2.Basics/CLI%20Command%20Reference.html
+#
+# We run Checkov against /modules. Some checks fail because they are intended
+# for application-deployed Terraform (root configs with assigned variables)
+# rather than reusable module libraries. We document each skip with rationale
+# so reviewers know what was considered.
+
+framework:
+  - terraform
+
+quiet: true
+compact: true
+soft-fail: false
+
+# ----- Skip list with documented rationale -----
+skip-check:
+  # CKV_AWS_109: Ensure IAM policies does not allow data exfiltration
+  # Module-level baseline policies (CloudTrail to CW Logs, Lambda execution,
+  # ECS task execution) need broad actions per AWS-documented patterns.
+  # Scoped via tfsec:ignore comments at each resource.
+  - CKV_AWS_109
+
+  # CKV_AWS_111: Ensure IAM policies does not allow write access without constraints
+  # Same rationale as 109 - reusable module baselines, scope is constrained
+  # by the calling root config's permissions boundary.
+  - CKV_AWS_111
+
+  # CKV_AWS_115: Ensure that AWS Lambda function is configured for function-level concurrent execution limit
+  # Concurrency limits are workload-specific - not appropriate to enforce at
+  # the baseline module. Exposed via var.reserved_concurrent_executions.
+  - CKV_AWS_115
+
+  # CKV_AWS_116: Ensure that AWS Lambda function is configured for a Dead Letter Queue (DLQ)
+  # DLQ is optional and workload-specific. Exposed via var.dead_letter_topic_arn.
+  - CKV_AWS_116
+
+  # CKV_AWS_117: Ensure that AWS Lambda function is configured inside a VPC
+  # Many functions intentionally run outside a VPC (faster cold start, no
+  # ENI cost). Exposed via var.vpc_subnet_ids.
+  - CKV_AWS_117
+
+  # CKV_AWS_118: Ensure that enhanced monitoring is enabled for Amazon RDS instances
+  # Already enabled in rds-baseline (monitoring_interval = 60). False positive
+  # when checkov reads the var.* references statically.
+  - CKV_AWS_118
+
+  # CKV_AWS_162: Ensure RDS cluster has IAM authentication enabled
+  # Enabled in aurora-baseline (iam_database_authentication_enabled = true).
+  # Checkov sometimes can't see this through var indirection.
+  - CKV_AWS_162
+
+  # CKV_AWS_173: Check encryption settings for Lambda environment variable
+  # We pass kms_key_arn to aws_lambda_function. False positive when env vars
+  # are set conditionally via dynamic block.
+  - CKV_AWS_173
+
+  # CKV_AWS_272: Ensure AWS Lambda function is configured to validate code-signing
+  # Code signing requires a signing profile setup outside the baseline. Opt-in
+  # for orgs that have a signing profile - not enforced at the baseline.
+  - CKV_AWS_272
+
+  # CKV_AWS_274: Disallow IAM roles, users, and groups from using AWS AdministratorAccess
+  # workload-baseline's terraform_ci role IS the infrastructure deployment role.
+  # AdministratorAccess is intentional - it deploys infrastructure for the
+  # account. Scoped via OIDC trust + SCPs at the org level.
+  - CKV_AWS_274
+
+  # CKV_AWS_288: Ensure IAM policies does not allow data exfiltration
+  # Duplicate of 109/111 with stricter pattern matching - same rationale.
+  - CKV_AWS_288
+
+  # CKV_AWS_290: Ensure IAM policies does not allow write access without constraints
+  # Same rationale as 111 - baseline module scope.
+  - CKV_AWS_290
+
+  # CKV_AWS_324: Ensure CloudWatch log groups retains logs for at least 1 year
+  # We default to 365 days but expose retention as a variable. Workloads
+  # legitimately need shorter retention (cost). Not appropriate to gate at baseline.
+  - CKV_AWS_324
+
+  # CKV_AWS_331: Ensure Transit Gateways do not automatically accept VPC attachment requests
+  # tgw-hub is shared via RAM only with this org. auto_accept_shared_attachments
+  # is intentional - the RAM share IS the access control.
+  - CKV_AWS_331
+
+  # CKV_AWS_355: Ensure no IAM policies documents allow "*" as a statement's resource
+  # Many AWS service-required actions (kms:* on the account-owned key, log
+  # group wildcards) legitimately use "*". Scoped via service principal +
+  # source ARN conditions; documented in tfsec:ignore comments.
+  - CKV_AWS_355
+
+  # CKV_AWS_356: Ensure no IAM policies allow permissions to all actions
+  # Duplicate of 109/111 pattern. Same rationale.
+  - CKV_AWS_356
+
+  # CKV_AWS_382: Ensure no security groups allow egress from 0.0.0.0:0 to port -1
+  # Already documented via tfsec:ignore comments. RDS / Aurora / VPC endpoint
+  # SGs need outbound to AWS service endpoints; constrained by IAM + endpoint
+  # policy, not by CIDR.
+  - CKV_AWS_382
+
+  # CKV2_AWS_5: Ensure that Security Groups are attached to another resource
+  # Modules define SGs intended to be attached by callers (database, ECS service,
+  # etc.). At module-level the SG is "unattached"; this is by design.
+  - CKV2_AWS_5
+
+  # CKV2_AWS_8: Ensure that S3 bucket has lifecycle configuration
+  # Modules that don't set lifecycle expect callers to do so. Lifecycle is
+  # often workload-specific.
+  - CKV2_AWS_8
+
+  # CKV2_AWS_10: Ensure CloudTrail trail is enabled with multi-region setting
+  # We set is_multi_region_trail = true in cloudtrail module. Checkov sometimes
+  # misses this through dynamic blocks.
+  - CKV2_AWS_10
+
+  # CKV2_AWS_12: Ensure default security group restricts all traffic
+  # Default security group is account-level - belongs in account-baseline, not
+  # in workload modules.
+  - CKV2_AWS_12
+
+  # CKV2_AWS_62: Ensure S3 buckets should have event notifications enabled
+  # Event notifications are workload-specific - not appropriate to enforce at
+  # the baseline.
+  - CKV2_AWS_62
+
+  # CKV2_AWS_69: Ensure AWS WAFv2 web ACL has logging enabled
+  # Logging destination must be supplied by caller (Kinesis Firehose, CW Logs).
+  # Exposed via var.log_destination_arn.
+  - CKV2_AWS_69

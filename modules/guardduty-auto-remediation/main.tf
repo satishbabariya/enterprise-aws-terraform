@@ -136,6 +136,15 @@ resource "aws_iam_role_policy_attachment" "quarantine_basic" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+resource "aws_iam_role_policy_attachment" "quarantine_xray" {
+  role       = aws_iam_role.quarantine.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess"
+}
+
+# Quarantine lambda operates across the org - must look up any instance/SG
+# and create a new SG in any VPC. EC2 IAM doesn't support per-resource ARNs
+# for CreateSecurityGroup or DescribeInstances.
+#tfsec:ignore:aws-iam-no-policy-wildcards
 resource "aws_iam_role_policy" "quarantine" {
   name = "quarantine-policy"
   role = aws_iam_role.quarantine.id
@@ -163,6 +172,10 @@ resource "aws_lambda_function" "quarantine" {
   runtime          = "python3.12"
   source_code_hash = data.archive_file.quarantine_lambda.output_base64sha256
   timeout          = 30
+
+  tracing_config {
+    mode = "Active"
+  }
 
   environment {
     variables = {

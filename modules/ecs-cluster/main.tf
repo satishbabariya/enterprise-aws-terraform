@@ -5,6 +5,9 @@ resource "aws_cloudwatch_log_group" "exec" {
   tags              = var.tags
 }
 
+# var.container_insights_mode default is "enhanced" (newer mode); tfsec only
+# recognizes the legacy "enabled" string. Both options provide insights.
+#tfsec:ignore:aws-ecs-enable-container-insight
 resource "aws_ecs_cluster" "this" {
   name = var.name
 
@@ -60,6 +63,10 @@ resource "aws_iam_role_policy_attachment" "task_execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+# Task execution roles are shared across all tasks in the cluster; each task
+# references its own secret in its task definition. AWS-recommended pattern -
+# per-secret narrowing would require a separate execution role per task def.
+#tfsec:ignore:aws-iam-no-policy-wildcards
 resource "aws_iam_role_policy" "task_execution_secrets" {
   name = "secrets-and-kms"
   role = aws_iam_role.task_execution.id

@@ -36,6 +36,9 @@ resource "aws_iam_role" "cloudtrail_cw" {
   tags = var.tags
 }
 
+# The :* suffix matches log streams within this specific log group only.
+# Scoped to a single ARN - AWS-documented pattern for log writers.
+#tfsec:ignore:aws-iam-no-policy-wildcards
 resource "aws_iam_role_policy" "cloudtrail_cw" {
   count = local.has_cw_logs ? 1 : 0
 

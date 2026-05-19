@@ -9,6 +9,14 @@ resource "aws_networkfirewall_rule_group" "domain_allowlist" {
   name     = "${var.org_name}-egress-domain-allowlist"
   type     = "STATEFUL"
 
+  dynamic "encryption_configuration" {
+    for_each = var.kms_key_arn != "" ? [1] : []
+    content {
+      key_id = var.kms_key_arn
+      type   = "CUSTOMER_KMS"
+    }
+  }
+
   rule_group {
     rules_source {
       rules_source_list {
@@ -30,6 +38,14 @@ resource "aws_networkfirewall_rule_group" "drop_invalid" {
   capacity = 100
   name     = "${var.org_name}-stateless-drop-invalid"
   type     = "STATELESS"
+
+  dynamic "encryption_configuration" {
+    for_each = var.kms_key_arn != "" ? [1] : []
+    content {
+      key_id = var.kms_key_arn
+      type   = "CUSTOMER_KMS"
+    }
+  }
 
   rule_group {
     rules_source {
@@ -58,6 +74,14 @@ resource "aws_networkfirewall_rule_group" "drop_invalid" {
 
 resource "aws_networkfirewall_firewall_policy" "this" {
   name = "${var.org_name}-firewall-policy"
+
+  dynamic "encryption_configuration" {
+    for_each = var.kms_key_arn != "" ? [1] : []
+    content {
+      key_id = var.kms_key_arn
+      type   = "CUSTOMER_KMS"
+    }
+  }
 
   firewall_policy {
     stateless_default_actions          = ["aws:forward_to_sfe"]
@@ -101,6 +125,14 @@ resource "aws_networkfirewall_firewall" "this" {
   name                = "${var.org_name}-network-firewall"
   vpc_id              = var.vpc_id
   firewall_policy_arn = aws_networkfirewall_firewall_policy.this.arn
+
+  dynamic "encryption_configuration" {
+    for_each = var.kms_key_arn != "" ? [1] : []
+    content {
+      key_id = var.kms_key_arn
+      type   = "CUSTOMER_KMS"
+    }
+  }
 
   dynamic "subnet_mapping" {
     for_each = toset(var.firewall_subnet_ids)

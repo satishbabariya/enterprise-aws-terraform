@@ -2,6 +2,10 @@ locals {
   bucket_name = "${var.org_name}-${var.region}-log-archive"
 }
 
+# This bucket IS the centralized logging destination for every other bucket
+# in the org. Self-logging would create an infinite loop of access events.
+# Trail integrity is protected by S3 Object Lock + KMS + bucket policy.
+#tfsec:ignore:aws-s3-enable-bucket-logging
 resource "aws_s3_bucket" "logs" {
   bucket              = local.bucket_name
   object_lock_enabled = true
@@ -67,6 +71,15 @@ resource "aws_s3_bucket_lifecycle_configuration" "logs" {
     transition {
       days          = 365
       storage_class = "GLACIER"
+    }
+  }
+
+  rule {
+    id     = "abort-incomplete-multipart"
+    status = "Enabled"
+    filter {}
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
     }
   }
 }

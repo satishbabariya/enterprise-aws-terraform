@@ -28,3 +28,14 @@ rule "terraform_documented_variables" {
 rule "terraform_documented_outputs" {
   enabled = true
 }
+
+# Disabled rules with rationale:
+
+# Module libraries legitimately declare variables that aren't referenced in
+# every code path (forward-compat, reserved for future features, passthrough
+# wiring that's optional). Removing them would be a breaking interface change.
+# We rely on `terraform_documented_variables` (above) to ensure every variable
+# has a clear description instead.
+rule "terraform_unused_declarations" {
+  enabled = false
+}

@@ -172,7 +172,10 @@ resource "aws_flow_log" "this" {
   tags = var.tags
 }
 
-# Security group for interface endpoints - allows HTTPS from within the VPC
+# Security group for interface endpoints. Endpoint ENIs only talk to the AWS
+# service backing the endpoint; endpoint policy + IAM constrain reachability.
+# CIDR-level restriction here would break service connectivity.
+#tfsec:ignore:aws-ec2-no-public-egress-sgr
 resource "aws_security_group" "endpoints" {
   count = length(var.interface_endpoint_services) > 0 ? 1 : 0
 
@@ -193,7 +196,7 @@ resource "aws_security_group" "endpoints" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
-    description = "All egress"
+    description = "All egress (endpoint policies constrain reachable services)"
   }
 
   tags = merge(var.tags, { Name = "${local.name_prefix}-vpc-endpoints-sg" })

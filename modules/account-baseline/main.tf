@@ -41,4 +41,6 @@ resource "aws_budgets_budget" "monthly" {
     notification_type          = "ACTUAL"
     subscriber_email_addresses = var.budget_notification_emails
   }
+
+  tags = var.tags
 }

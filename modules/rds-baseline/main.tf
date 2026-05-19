@@ -15,6 +15,9 @@ resource "aws_db_subnet_group" "this" {
   tags        = var.tags
 }
 
+# RDS needs outbound to AWS service endpoints (Secrets Manager rotation + IAM
+# DB auth STS). No VPC endpoint exists for every required API.
+#tfsec:ignore:aws-ec2-no-public-egress-sgr
 resource "aws_security_group" "this" {
   name        = "${var.name}-rds-sg"
   description = "Allow DB port from approved security groups only"
@@ -36,7 +39,7 @@ resource "aws_security_group" "this" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
-    description = "All egress (for outbound API calls)"
+    description = "All egress (Secrets Manager rotation + IAM auth STS)"
   }
 
   tags = merge(var.tags, { Name = "${var.name}-rds-sg" })
