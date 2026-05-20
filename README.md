@@ -1,5 +1,14 @@
 # Enterprise AWS Terraform Organization
 
+[![Lint](https://github.com/satishbabariya/enterprise-aws-terraform/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/satishbabariya/enterprise-aws-terraform/actions/workflows/lint.yml)
+[![Terraform Tests](https://github.com/satishbabariya/enterprise-aws-terraform/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/satishbabariya/enterprise-aws-terraform/actions/workflows/test.yml)
+[![Module Docs](https://github.com/satishbabariya/enterprise-aws-terraform/actions/workflows/docs.yml/badge.svg?branch=main)](https://github.com/satishbabariya/enterprise-aws-terraform/actions/workflows/docs.yml)
+[![Terraform](https://img.shields.io/badge/terraform-%E2%89%A5%201.9-7B42BC?logo=terraform&logoColor=white)](https://www.terraform.io)
+[![AWS Provider](https://img.shields.io/badge/aws--provider-~%3E%205.0-FF9900?logo=amazon-aws&logoColor=white)](https://registry.terraform.io/providers/hashicorp/aws/latest)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Compliance](https://img.shields.io/badge/compliance-CIS%20%7C%20SOC2%20%7C%20PCI--DSS%20%7C%20HIPAA-success)](docs/compliance-matrix.md)
+[![Modules](https://img.shields.io/badge/modules-47-informational)](#module-catalog)
+
 Production-ready Terraform template for a complete enterprise AWS organization.
 Covers CIS AWS Foundations, SOC 2, PCI-DSS, and HIPAA compliance by default.
 

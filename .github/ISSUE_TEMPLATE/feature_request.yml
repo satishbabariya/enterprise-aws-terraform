@@ -1,0 +1,74 @@
+name: Feature request
+description: New module, new functionality, or significant enhancement
+labels: [enhancement, triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before opening, check if a similar request exists. Small enhancements
+        to existing modules (new variable, new resource) are easier to land
+        than entirely new modules.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: |
+        Describe the concrete enterprise need this addresses. "It would be nice
+        to have X" isn't enough — explain who needs it and why.
+      placeholder: |
+        Our compliance team needs continuous evidence that all RDS instances
+        in the workloads OU are encrypted. We currently piece this together
+        from AWS Config conformance pack output and Audit Manager exports...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type of change
+      options:
+        - New module
+        - New variable/output on existing module
+        - New CI workflow
+        - New documentation
+        - Reference-architecture pattern (multi-region, etc.)
+        - Other (describe)
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed approach
+      description: |
+        How would you implement this? Reference existing modules / patterns.
+        If you have HCL sketches, paste them here.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What did you try / consider that didn't work?
+
+  - type: dropdown
+    id: tier
+    attributes:
+      label: Priority (your assessment)
+      options:
+        - Tier 1 - foundational; most users need this
+        - Tier 2 - widely useful for typical enterprises
+        - Tier 3 - specialized; some orgs need it
+        - Niche - solves a specific organization's problem
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I'm willing to implement this and submit a PR
+        - label: I can help review someone else's PR for this

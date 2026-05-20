@@ -1,0 +1,88 @@
+name: Bug report
+description: Something in this template doesn't work as documented
+labels: [bug, triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Please fill in every section so this is actionable
+        without a back-and-forth. If you're reporting a security issue, do NOT
+        use this form — see `SECURITY.md` instead.
+
+  - type: input
+    id: module
+    attributes:
+      label: Module / file affected
+      description: e.g., `modules/cloudtrail` or `medium/accounts/security`
+      placeholder: modules/<name>
+    validations:
+      required: true
+
+  - type: input
+    id: terraform-version
+    attributes:
+      label: Terraform version
+      description: Output of `terraform version`
+      placeholder: "1.9.5"
+    validations:
+      required: true
+
+  - type: input
+    id: provider-version
+    attributes:
+      label: AWS provider version
+      description: From `.terraform.lock.hcl` after `terraform init`
+      placeholder: "5.70.0"
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: Concrete failure — error message, unexpected state, etc.
+      placeholder: |
+        After running `terraform apply` against medium/accounts/security,
+        the aws_securityhub_finding_aggregator resource failed with...
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-expected
+    attributes:
+      label: What you expected
+      description: What should have happened per the module docs
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Exact commands to reproduce. Include the relevant tfvars (redact account IDs/secrets).
+      render: shell
+      placeholder: |
+        cd modules/<name>
+        terraform init -backend=false
+        terraform plan -var ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs / plan output
+      description: Wrap in triple backticks. Redact account IDs, ARNs, secrets.
+      render: text
+
+  - type: dropdown
+    id: compliance-impact
+    attributes:
+      label: Compliance impact
+      description: Does this bug affect any CIS/SOC2/PCI/HIPAA control?
+      options:
+        - "No - functional bug only"
+        - "Yes - weakens an existing compliance control"
+        - "Not sure"
+    validations:
+      required: true

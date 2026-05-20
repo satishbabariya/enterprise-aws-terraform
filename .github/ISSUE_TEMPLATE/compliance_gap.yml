@@ -1,0 +1,55 @@
+name: Compliance gap
+description: A control in docs/compliance-matrix.md isn't actually implemented (or breaks during real-world audit)
+labels: [compliance, triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for compliance / audit gaps — when a control we claim to
+        enforce in `docs/compliance-matrix.md` doesn't actually hold up under
+        scrutiny. For straight functional bugs, use Bug Report.
+
+  - type: dropdown
+    id: framework
+    attributes:
+      label: Framework
+      options:
+        - CIS AWS Foundations
+        - SOC 2
+        - PCI-DSS
+        - HIPAA
+        - NIST 800-53
+        - Other / multiple
+    validations:
+      required: true
+
+  - type: input
+    id: control
+    attributes:
+      label: Control ID
+      description: e.g., "CIS 3.1", "SOC2 CC6.1", "PCI 8.2.4"
+      placeholder: CIS 3.1
+    validations:
+      required: true
+
+  - type: textarea
+    id: claim
+    attributes:
+      label: What the template claims
+      description: Quote the relevant row from docs/compliance-matrix.md
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What's actually missing or wrong
+      description: Concrete evidence — failed Security Hub finding, audit observation, etc.
+    validations:
+      required: true
+
+  - type: textarea
+    id: fix
+    attributes:
+      label: Proposed fix
+      description: How should the template close this gap? Reference modules / variables to change.
