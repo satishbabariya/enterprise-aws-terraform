@@ -53,6 +53,18 @@ After `management` is applied:
 - Set GitHub repo variable `MANAGEMENT_ACCOUNT_ID` to your management account ID
 - Push a PR to validate the plan workflow runs
 
+`MANAGEMENT_ACCOUNT_ID` is shared by the Plan, Apply and Drift Detection
+workflows. Each one assumes
+`arn:aws:iam::<MANAGEMENT_ACCOUNT_ID>:role/acme-management-terraform-ci` through
+GitHub OIDC, so that role (created by the `management` account root) must
+exist and trust this repository.
+
+The nightly Drift Detection workflow checks for the variable first. Until it is
+set, the drift job is skipped and the run finishes successfully with the notice
+"drift detection skipped: no AWS role configured". Once it is set, every
+account root is planned nightly: drift opens a `terraform-drift` issue, and a
+plan error fails the run.
+
 ## Adding a New Workload Account
 
 ```bash
