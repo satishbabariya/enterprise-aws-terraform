@@ -31,3 +31,7 @@ Thumbs.db
 
 # Reference repositories (not part of this project)
 refrences/
+
+# Personal planning artifacts (kept outside the repo)
+docs/superpowers/
+.superpowers/

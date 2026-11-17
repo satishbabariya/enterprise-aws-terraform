@@ -5,14 +5,40 @@ on:
     - cron: '0 2 * * *'  # 2am UTC nightly
   workflow_dispatch:
 
-permissions:
-  id-token: write
-  contents: read
-  issues: write
+# Drift detection needs the same CI wiring as plan.yml / apply.yml: the repo
+# variable MANAGEMENT_ACCOUNT_ID plus the OIDC role it points at (see
+# docs/onboarding.md, "Wire CI/CD"). In a fork or template copy where that is
+# not set up yet, the drift job is skipped and the run ends green with a notice
+# instead of failing every night on an invalid role ARN.
+permissions: {}
 
 jobs:
-  drift:
+  check-config:
     runs-on: ubuntu-latest
+    permissions: {}
+    outputs:
+      configured: ${{ steps.check.outputs.configured }}
+    steps:
+      - name: Check CI configuration
+        id: check
+        env:
+          MANAGEMENT_ACCOUNT_ID: ${{ vars.MANAGEMENT_ACCOUNT_ID }}
+        run: |
+          if [ -z "$MANAGEMENT_ACCOUNT_ID" ]; then
+            echo "::notice title=Drift detection skipped::drift detection skipped: no AWS role configured (set the MANAGEMENT_ACCOUNT_ID repository variable, see docs/onboarding.md)"
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  drift:
+    needs: check-config
+    if: needs.check-config.outputs.configured == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      issues: write
     strategy:
       fail-fast: false
       matrix:
@@ -78,3 +104,9 @@ jobs:
               body: `## Terraform drift detected in \`${{ matrix.account }}\`\n\n\`\`\`\n${drift.substring(0, 65000)}\n\`\`\``,
               labels: ['terraform-drift']
             });
+
+      - name: Fail if plan errored
+        if: steps.drift.outputs.exit_code != '0' && steps.drift.outputs.exit_code != '2'
+        run: |
+          echo "::error title=Drift check failed::terraform plan exited with code ${{ steps.drift.outputs.exit_code }} in ${{ matrix.account }}"
+          exit 1

@@ -2,7 +2,7 @@
 
 ## Account & OU Structure
 
-See design spec: `docs/superpowers/specs/2026-05-18-enterprise-terraform-design.md`
+See the architecture diagram and account layout in the [README](../README.md#architecture).
 
 ## Deployment Dependency Graph
 
