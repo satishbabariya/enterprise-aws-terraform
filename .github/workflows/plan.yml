@@ -21,6 +21,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # In a fork or template copy without the CI wiring (docs/onboarding.md, "Wire CI/CD"),
+      # the plan job is skipped with a notice instead of failing on an invalid role ARN.
+      - name: Check CI configuration
+        if: vars.MANAGEMENT_ACCOUNT_ID == ''
+        run: echo "::notice title=Terraform plan skipped::no AWS role configured (set the MANAGEMENT_ACCOUNT_ID repository variable, see docs/onboarding.md)"
+
       - name: Detect changed account roots
         id: filter
         uses: dorny/paths-filter@v3
@@ -48,7 +54,7 @@ jobs:
   plan:
     needs: detect-changes
     runs-on: ubuntu-latest
-    if: ${{ needs.detect-changes.outputs.accounts != '[]' && needs.detect-changes.outputs.accounts != '' }}
+    if: ${{ vars.MANAGEMENT_ACCOUNT_ID != '' && needs.detect-changes.outputs.accounts != '[]' && needs.detect-changes.outputs.accounts != '' }}
     strategy:
       fail-fast: false
       matrix:
